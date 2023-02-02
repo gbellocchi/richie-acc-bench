@@ -260,7 +260,7 @@ runhls: data setup | check_vivado # check_vpp
 	$(HLS) -f run_hls.tcl;
 
 clean:
-	rm -rf settings.tcl *_hls.log colordetect.prj
+	@rm -rf settings.tcl *_hls.log colordetect.prj rtl/*
 
 # Used by Jenkins test
 cleanall: clean
