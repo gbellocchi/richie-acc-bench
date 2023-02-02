@@ -14,15 +14,25 @@
 # limitations under the License.
 #
 
-PRJ_NAME := colordetect.prj
-ACC_NAME := color_detect
+ROOT 			= $(patsubst %/,%, $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
-CPP_DESIGN_TOP := xf_colordetect_accel.cpp
-CPP_DESIGN_TB := xf_colordetect_tb.cpp
+SRC_DIR 		= $(ROOT)/src
+TCL_DIR 		= $(ROOT)/../../common/tcl
+RTL_DIR 		= $(ROOT)/rtl
 
-MK_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
-CUR_DIR := $(patsubst %/,%,$(dir $(MK_PATH)))
-XF_PROJ_ROOT ?= $(shell bash -c 'export MK_PATH=$(MK_PATH);')
+PRJ_NAME 		:= colordetect.prj
+SOL_NAME 		:= sol1
+ACC_NAME 		:= color_detect
+
+CPP_TOP_PATH 	:= $(SRC_DIR)/xf_colordetect_accel.cpp
+CPP_TB_PATH 	:= $(SRC_DIR)/xf_colordetect_tb.cpp
+
+SYN_DIR			= $(ROOT)/$(PRJ_NAME)/$(SOL_NAME)/syn/verilog
+IMPL_DIR		= $(ROOT)/$(PRJ_NAME)/$(SOL_NAME)/impl/verilog
+
+MK_PATH 		:= $(abspath $(lastword $(MAKEFILE_LIST)))
+CUR_DIR 		:= $(patsubst %/,%,$(dir $(MK_PATH)))
+XF_PROJ_ROOT 	?= $(shell bash -c 'export MK_PATH=$(MK_PATH);')
 
 # MK_INC_BEGIN hls_common.mk
 
@@ -236,9 +246,10 @@ setup: | check_part #check_opencv
 	@rm -f ./settings.tcl
 	@if [ -n "$$CLKP" ]; then echo 'set CLKP $(CLKP)' >> ./settings.tcl ; fi
 	@echo 'set PRJ_NAME $(PRJ_NAME)' >> ./settings.tcl
+	@echo 'set SOL_NAME $(SOL_NAME)' >> ./settings.tcl
 	@echo 'set ACC_NAME $(ACC_NAME)' >> ./settings.tcl
-	@echo 'set CPP_DESIGN_TOP $(CPP_DESIGN_TOP)' >> ./settings.tcl
-	@echo 'set CPP_DESIGN_TB $(CPP_DESIGN_TB)' >> ./settings.tcl
+	@echo 'set CPP_TOP_PATH $(CPP_TOP_PATH)' >> ./settings.tcl
+	@echo 'set CPP_TB_PATH $(CPP_TB_PATH)' >> ./settings.tcl
 	@echo 'set XPART $(XPART)' >> ./settings.tcl
 	@echo 'set CSIM $(CSIM)' >> ./settings.tcl
 	@echo 'set CSYNTH $(CSYNTH)' >> ./settings.tcl
@@ -257,17 +268,17 @@ setup: | check_part #check_opencv
 
 HLS ?= vitis_hls
 runhls: data setup | check_vivado # check_vpp
-	$(HLS) -f run_hls.tcl;
+	$(HLS) -f $(TCL_DIR)/run_hls.tcl;
 
 clean:
-	@rm -rf settings.tcl *_hls.log colordetect.prj rtl/*
+	@rm -rf settings.tcl *_hls.log colordetect.prj $(RTL_DIR)/*
 
 # Used by Jenkins test
 cleanall: clean
 
 get_rtl:
-	@mkdir -p rtl
-	@rm -f rtl/*
-	@cp -rf $(PRJ_NAME)/sol1/syn/verilog/* rtl
+	@mkdir -p $(RTL_DIR)
+	@rm -f $(RTL_DIR)/*
+	@cp -rf $(SYN_DIR)/* $(RTL_DIR)
 
 # MK_INC_END hls_test_rules.mk

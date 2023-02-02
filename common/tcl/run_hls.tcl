@@ -17,7 +17,7 @@
 source settings.tcl
 
 set PROJ "${PRJ_NAME}"
-set SOLN "sol1"
+set SOLN "${SOL_NAME}"
 
 if {![info exists CLKP]} {
   set CLKP 3.3
@@ -25,8 +25,8 @@ if {![info exists CLKP]} {
 
 open_project -reset $PROJ
 
-add_files "${CUR_DIR}/${CPP_DESIGN_TOP}" -cflags "-I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -D__SDSVHLS__ -std=c++0x" -csimflags "-I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -D__SDSVHLS__ -std=c++0x"
-add_files -tb "${CUR_DIR}/${CPP_DESIGN_TB}" -cflags "-I${OPENCV_INCLUDE} -I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -D__SDSVHLS__ -std=c++0x" -csimflags "-I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -D__SDSVHLS__ -std=c++0x"
+add_files "${CPP_TOP_PATH}" -cflags "-I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -D__SDSVHLS__ -std=c++0x" -csimflags "-I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -D__SDSVHLS__ -std=c++0x"
+add_files -tb "${CPP_TB_PATH}" -cflags "-I${OPENCV_INCLUDE} -I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -D__SDSVHLS__ -std=c++0x" -csimflags "-I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -D__SDSVHLS__ -std=c++0x"
 set_top ${ACC_NAME}
 
 open_solution -reset $SOLN

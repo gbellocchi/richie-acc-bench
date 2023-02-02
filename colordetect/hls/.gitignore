@@ -3,3 +3,4 @@
 *.str
 *.jou
 rtl/*
+settings.tcl
