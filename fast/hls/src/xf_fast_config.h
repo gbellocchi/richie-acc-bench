@@ -38,11 +38,23 @@
 #endif
 
 // Set the pixel depth:
-#define TYPE XF_32UC1 //XF_8UC1
+#define TYPE XF_8UC1
 
 // Streaming interface
 typedef ap_axiu<PTR_WIDTH,1,1,1> interface_t;
 typedef hls::stream<interface_t> stream_t;
+
+// // Definition of ap_axiu
+// template<int D,int U,int TI,int TD>
+// struct ap_axiu{
+// ap_uint<D>       data;
+// ap_uint<(D+7)/8> keep;
+// ap_uint<(D+7)/8> strb;
+// ap_uint<U>       user;
+// ap_uint<1>       last;
+// ap_uint<TI>      id;
+// ap_uint<TD>      dest;
+// };
 
 void fast_corner_detect(
     // Data

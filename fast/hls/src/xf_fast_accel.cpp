@@ -32,21 +32,22 @@ void fast_corner_detect(
 
     // #pragma HLS INTERFACE axis port=threshold
 
-    xf::cv::Mat<TYPE, HEIGHT, WIDTH, NPC1> imgInput(rows, cols);
-    xf::cv::Mat<TYPE, HEIGHT, WIDTH, NPC1> imgOutput(rows, cols);
+    int _rows = HEIGHT;
+    int _cols = WIDTH;
+
+    xf::cv::Mat<TYPE, HEIGHT, WIDTH, NPC1> imgInput(_rows, _cols);
+    xf::cv::Mat<TYPE, HEIGHT, WIDTH, NPC1> imgOutput(_rows, _cols);
 
     #pragma HLS DATAFLOW
 
     // Convert stream in to xf::cv::Mat
     xf::cv::AXIvideo2xfMat<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1>(img_in, imgInput);
-    // xf::cv::axiStrm2xfMat<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1>(img_in, imgInput);
 
     // Run xfOpenCV kernel:
     xf::cv::fast<NMS, TYPE, HEIGHT, WIDTH, NPC1>(imgInput, imgOutput, threshold);
 
     // // Convert xf::cv::Mat object to output stream:
     xf::cv::xfMat2AXIvideo<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1>(imgOutput, img_out);
-    // xf::cv::xfMat2axiStrm<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1>(imgOutput, img_out);
 
     return;
 } // End of kernel
