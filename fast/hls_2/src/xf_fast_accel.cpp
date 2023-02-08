@@ -30,38 +30,39 @@ void fast_corner_detect(
 
     // #pragma HLS INTERFACE axis port=threshold
 
+    // matrices
     xf::cv::Mat<TYPE, HEIGHT, WIDTH, NPC1> imgInput(rows, cols);
     xf::cv::Mat<TYPE, HEIGHT, WIDTH, NPC1> imgOutput(rows, cols);
+
+    // streams
+    hls::stream<ap_uint<PTR_WIDTH> > stream_img_in;
+    hls::stream<ap_uint<PTR_WIDTH> > stream_img_out;
 
     #pragma HLS DATAFLOW
 
     // common
     xf::cv::accel_utils utils;
     const int ch_width = XF_DTPIXELDEPTH(TYPE, NPC1);
-
-    // Array2xfMat - Conversion from input array -> stream -> Mat
-    hls::stream<ap_uint<PTR_WIDTH> > stream_img_in;
     int imgInput_cols_align_npc = ((cols + (NPC1 - 1)) >> XF_BITSHIFT(NPC1)) << XF_BITSHIFT(NPC1);
-
-    utils.Array2hlsStrm<PTR_WIDTH, HEIGHT, WIDTH, NPC1, XF_CHANNELS(TYPE, NPC1), ch_width,
-                    ((HEIGHT * WIDTH * XF_CHANNELS(TYPE, NPC1) * ch_width) / PTR_WIDTH)>(img_in, stream_img_in, rows, cols);
-    utils.hlsStrm2xfMat<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1, (HEIGHT * WIDTH) / NPC1>(stream_img_in, imgInput, imgInput_cols_align_npc);
-
-    // // AXIvideo2xfMat - Conversion from stream -> Mat
-    // xf::cv::AXIvideo2xfMat<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1>(stream_img_in, imgInput);
-
-    // Run xfOpenCV kernel:
-    xf::cv::fast<NMS, TYPE, HEIGHT, WIDTH, NPC1>(imgInput, imgOutput, threshold);
-
-    // // xfMat2AXIvideo - Conversion from Mat -> stream
-    // xf::cv::xfMat2AXIvideo<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1>(imgOutput, stream_img_out);
-
-    // xfMat2Array - Conversion from Mat -> stream -> input array
-    hls::stream<ap_uint<PTR_WIDTH> > stream_img_out;
     int imgOutput_cols_align_npc = ((cols + (NPC1 - 1)) >> XF_BITSHIFT(NPC1)) << XF_BITSHIFT(NPC1);
 
+    // conversion ARRAY -> STREAM
+    utils.Array2hlsStrm<PTR_WIDTH, HEIGHT, WIDTH, NPC1, XF_CHANNELS(TYPE, NPC1), ch_width,
+                    ((HEIGHT * WIDTH * XF_CHANNELS(TYPE, NPC1) * ch_width) / PTR_WIDTH)>(img_in, stream_img_in, rows, cols);
+
+    // conversion STREAM -> MAT
+    utils.hlsStrm2xfMat<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1, (HEIGHT * WIDTH) / NPC1>(stream_img_in, imgInput, imgInput_cols_align_npc);
+    // xf::cv::AXIvideo2xfMat<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1>(stream_img_in, imgInput);
+
+    // run xfOpenCV kernel:
+    xf::cv::fast<NMS, TYPE, HEIGHT, WIDTH, NPC1>(imgInput, imgOutput, threshold);
+
+    // conversion MAT -> STREAM
     utils.xfMat2hlsStrm<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1, HEIGHT *((WIDTH + NPC1 - 1) / NPC1)>(imgOutput, stream_img_out,
                                                                                     imgOutput_cols_align_npc);
+    // xf::cv::xfMat2AXIvideo<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1>(imgOutput, stream_img_out);
+                                                                                
+    // conversion STREAM -> ARRAY
     utils.hlsStrm2Array<PTR_WIDTH, HEIGHT, WIDTH, NPC1, XF_CHANNELS(TYPE, NPC1), ch_width,
                     ((HEIGHT * WIDTH * XF_CHANNELS(TYPE, NPC1) * ch_width) / PTR_WIDTH)>(stream_img_out, img_out, rows, cols);
 
