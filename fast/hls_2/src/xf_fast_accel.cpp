@@ -28,8 +28,6 @@ void fast_corner_detect(
     #pragma HLS INTERFACE axis register register_mode=off port=img_in
     #pragma HLS INTERFACE axis register register_mode=off port=img_out
 
-    // #pragma HLS INTERFACE axis port=threshold
-
     // matrices
     xf::cv::Mat<TYPE, HEIGHT, WIDTH, NPC1> imgInput(rows, cols);
     xf::cv::Mat<TYPE, HEIGHT, WIDTH, NPC1> imgOutput(rows, cols);
@@ -47,8 +45,7 @@ void fast_corner_detect(
     int imgOutput_cols_align_npc = ((cols + (NPC1 - 1)) >> XF_BITSHIFT(NPC1)) << XF_BITSHIFT(NPC1);
 
     // conversion ARRAY -> STREAM
-    utils.Array2hlsStrm<PTR_WIDTH, HEIGHT, WIDTH, NPC1, XF_CHANNELS(TYPE, NPC1), ch_width,
-                    ((HEIGHT * WIDTH * XF_CHANNELS(TYPE, NPC1) * ch_width) / PTR_WIDTH)>(img_in, stream_img_in, rows, cols);
+    utils.Array2hlsStrm<PTR_WIDTH, HEIGHT, WIDTH, NPC1, XF_CHANNELS(TYPE, NPC1), ch_width, ((HEIGHT * WIDTH * XF_CHANNELS(TYPE, NPC1) * ch_width) / PTR_WIDTH)>(img_in, stream_img_in, rows, cols);
 
     // conversion STREAM -> MAT
     utils.hlsStrm2xfMat<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1, (HEIGHT * WIDTH) / NPC1>(stream_img_in, imgInput, imgInput_cols_align_npc);
@@ -58,13 +55,11 @@ void fast_corner_detect(
     xf::cv::fast<NMS, TYPE, HEIGHT, WIDTH, NPC1>(imgInput, imgOutput, threshold);
 
     // conversion MAT -> STREAM
-    utils.xfMat2hlsStrm<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1, HEIGHT *((WIDTH + NPC1 - 1) / NPC1)>(imgOutput, stream_img_out,
-                                                                                    imgOutput_cols_align_npc);
+    utils.xfMat2hlsStrm<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1, HEIGHT *((WIDTH + NPC1 - 1) / NPC1)>(imgOutput, stream_img_out, imgOutput_cols_align_npc);
     // xf::cv::xfMat2AXIvideo<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1>(imgOutput, stream_img_out);
                                                                                 
     // conversion STREAM -> ARRAY
-    utils.hlsStrm2Array<PTR_WIDTH, HEIGHT, WIDTH, NPC1, XF_CHANNELS(TYPE, NPC1), ch_width,
-                    ((HEIGHT * WIDTH * XF_CHANNELS(TYPE, NPC1) * ch_width) / PTR_WIDTH)>(stream_img_out, img_out, rows, cols);
+    utils.hlsStrm2Array<PTR_WIDTH, HEIGHT, WIDTH, NPC1, XF_CHANNELS(TYPE, NPC1), ch_width, ((HEIGHT * WIDTH * XF_CHANNELS(TYPE, NPC1) * ch_width) / PTR_WIDTH)>(stream_img_out, img_out, rows, cols);
 
     return;
 } // End of kernel
