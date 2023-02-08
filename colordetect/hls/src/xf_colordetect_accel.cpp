@@ -16,42 +16,26 @@
 
 #include "xf_colordetect_config.h"
 
-extern "C" {
+static constexpr int __XF_DEPTH = (HEIGHT * WIDTH * (XF_PIXELWIDTH(IN_TYPE, NPC1)) / 8) / (INPUT_PTR_WIDTH / 8);
+static constexpr int __XF_DEPTH_OUT = (HEIGHT * WIDTH * (XF_PIXELWIDTH(OUT_TYPE, NPC1)) / 8) / (OUTPUT_PTR_WIDTH / 8);
+static constexpr int __XF_DEPTH_FILTER = (FILTER_SIZE * FILTER_SIZE);
 
 void color_detect(
-                        // Images
-                        ap_uint<PTR_IN_WIDTH>* img_in,
-                        ap_uint<PTR_OUT_WIDTH>* img_out,
-
-                        // Masks
-                        unsigned char *low_thresh,
-                        unsigned char *high_thresh,
-                        unsigned char *process_shape,
-
-                        // Registers
-                        int rows,
-                        int cols
+            ap_uint<INPUT_PTR_WIDTH>* img_in,
+            ap_uint<OUTPUT_PTR_WIDTH>* img_out,
+            unsigned char* low_thresh,
+            unsigned char* high_thresh,
+            unsigned char* process_shape,
+            int rows,
+            int cols
 ) {
-    // #pragma HLS INTERFACE m_axi      port=img_in        offset=slave  bundle=gmem0
-   
-    // #pragma HLS INTERFACE m_axi      port=low_thresh    offset=slave  bundle=gmem1
-    // #pragma HLS INTERFACE s_axilite  port=low_thresh 			     
-    // #pragma HLS INTERFACE m_axi      port=high_thresh   offset=slave  bundle=gmem2
-    // #pragma HLS INTERFACE s_axilite  port=high_thresh 			      
-    // #pragma HLS INTERFACE s_axilite  port=rows 			      
-    // #pragma HLS INTERFACE s_axilite  port=cols 			      
-    // #pragma HLS INTERFACE m_axi      port=process_shape offset=slave  bundle=gmem3
-    // #pragma HLS INTERFACE s_axilite  port=process_shape			      
-    // #pragma HLS INTERFACE m_axi      port=img_out       offset=slave  bundle=gmem4
 
-    #pragma HLS INTERFACE axis port=img_in
-    #pragma HLS INTERFACE axis port=img_out
+    #pragma HLS INTERFACE axis register register_mode=off port=img_in
+    #pragma HLS INTERFACE axis register register_mode=off port=img_out
 
-    #pragma HLS INTERFACE axis port=low_thresh
-    #pragma HLS INTERFACE axis port=high_thresh
-    #pragma HLS INTERFACE axis port=process_shape
-
-    // clang-format on
+    #pragma HLS INTERFACE axis register register_mode=off port=low_thresh
+    #pragma HLS INTERFACE axis register register_mode=off port=high_thresh
+    #pragma HLS INTERFACE axis register register_mode=off port=process_shape
 
     xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1> imgInput(rows, cols);
     xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1> rgb2hsv(rows, cols);
@@ -74,7 +58,7 @@ void color_detect(
     #pragma HLS DATAFLOW
     // clang-format on
     // Retrieve xf::cv::Mat objects from img_in data:
-    xf::cv::Array2xfMat<PTR_IN_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1>(img_in, imgInput);
+    xf::cv::Array2xfMat<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1>(img_in, imgInput);
 
     // Convert RGBA to HSV:
     xf::cv::bgr2hsv<IN_TYPE, HEIGHT, WIDTH, NPC1>(imgInput, rgb2hsv);
@@ -94,9 +78,8 @@ void color_detect(
                   NPC1>(imgHelper4, imgOutput, _kernel);
 
     // Convert _dst xf::cv::Mat object to output array:
-    xf::cv::xfMat2Array<PTR_OUT_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(imgOutput, img_out);
+    xf::cv::xfMat2Array<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(imgOutput, img_out);
 
     return;
 
 } // End of kernel
-} // End of extern C

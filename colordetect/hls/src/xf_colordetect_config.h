@@ -31,8 +31,8 @@
 //#define MAXCOLORS 3
 
 /* Set the image height and width */
-#define HEIGHT 2160
-#define WIDTH 3840
+#define HEIGHT 128
+#define WIDTH 128
 
 /* Color thresholding parameters */
 #define MAXCOLORS 3
@@ -48,8 +48,8 @@
 // Set the input and output pixel depth:
 #define IN_TYPE XF_8UC3
 #define OUT_TYPE XF_8UC1
-#define PTR_IN_WIDTH 32
-#define PTR_OUT_WIDTH 8
+#define INPUT_PTR_WIDTH 32
+#define OUTPUT_PTR_WIDTH 8
 
 // Resolve mask shape:
 #if KERNEL_SHAPE == 0
@@ -61,5 +61,15 @@
 #else
 #define XF_KERNEL_SHAPE XF_SHAPE_RECT
 #endif
+
+void color_detect(
+            ap_uint<INPUT_PTR_WIDTH>* img_in,
+            ap_uint<OUTPUT_PTR_WIDTH>* img_out,
+            unsigned char* low_thresh,
+            unsigned char* high_thresh,
+            unsigned char* process_shape,
+            int rows,
+            int cols
+);
 
 #endif

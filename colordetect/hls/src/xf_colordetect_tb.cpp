@@ -15,17 +15,15 @@
  */
 
 #include "common/xf_headers.hpp"
-#include "xcl2.hpp"
+
 #include "xf_colordetect_config.h"
 // OpenCV reference function:
-void colordetect(cv::Mat& _src, cv::Mat& _dst, unsigned char* nLowThresh, unsigned char* nHighThresh) {
+void colordetect_ref(cv::Mat& _src, cv::Mat& _dst, unsigned char* nLowThresh, unsigned char* nHighThresh) {
     // Temporary matrices for processing
     cv::Mat mask1, mask2, mask3, _imgrange, _imghsv;
 
-    // Convert the input to the HSV colorspace. Using BGR here since it is the
-    // default of OpenCV.
-    // Using RGB yields different results, requiring a change of the threshold
-    // ranges
+    // Convert the input to the HSV colorspace. Using BGR here since it is the default of OpenCV.
+    // Using RGB yields different results, requiring a change of the threshold ranges
     cv::cvtColor(_src, _imghsv, cv::COLOR_BGR2HSV);
 
     // Get the color of Yellow from the HSV image and store it as a mask
@@ -79,14 +77,9 @@ int main(int argc, char** argv) {
 
     cv::Mat element = cv::getStructuringElement(0, cv::Size(FILTER_SIZE, FILTER_SIZE), cv::Point(-1, -1));
 
-    // Create vectors holding thresholds and shape:
-    std::vector<unsigned char, aligned_allocator<unsigned char> > high_thresh(FILTER_SIZE * FILTER_SIZE);
-    std::vector<unsigned char, aligned_allocator<unsigned char> > low_thresh(FILTER_SIZE * FILTER_SIZE);
-    std::vector<unsigned char, aligned_allocator<unsigned char> > shape(FILTER_SIZE * FILTER_SIZE);
-
-    for (int i = 0; i < (FILTER_SIZE * FILTER_SIZE); i++) {
-        shape[i] = element.data[i];
-    }
+    unsigned char* high_thresh = (unsigned char*)malloc(FILTER_SIZE * (FILTER_SIZE) * sizeof(unsigned char));
+    unsigned char* low_thresh = (unsigned char*)malloc(FILTER_SIZE * (FILTER_SIZE) * sizeof(unsigned char));
+    unsigned char* shape = (unsigned char*)malloc(FILTER_SIZE * (FILTER_SIZE) * sizeof(unsigned char));
 
     // Define the low and high thresholds
     // Want to grab 3 colors (Yellow, Green, Red) for the input image
@@ -114,98 +107,30 @@ int main(int argc, char** argv) {
     high_thresh[7] = 255;
     high_thresh[8] = 255;
 
+    for (int i = 0; i < (FILTER_SIZE * FILTER_SIZE); i++) {
+        shape[i] = element.data[i];
+    }
+
     int rows = in_img.rows;
     int cols = in_img.cols;
 
     std::cout << "INFO: Thresholds loaded." << std::endl;
 
     // Reference function:
-    colordetect(in_img, ocv_ref, low_thresh.data(), high_thresh.data());
+    colordetect_ref(in_img, ocv_ref, low_thresh, high_thresh);
 
     // Write down reference and input image:
     cv::imwrite("outputref.png", ocv_ref);
 
-    // OpenCL section:
-    size_t image_in_size = in_img.rows * in_img.cols * in_img.channels() * sizeof(unsigned char);
-    size_t image_out_size = in_img.rows * in_img.cols * sizeof(unsigned char);
-    size_t vector_size = FILTER_SIZE * FILTER_SIZE * sizeof(unsigned char);
-
-    cl_int err;
-    std::cout << "INFO: Running OpenCL section." << std::endl;
-
-    // Get the device:
-    std::vector<cl::Device> devices = xcl::get_xil_devices();
-    cl::Device device = devices[0];
-
-    // Contex, command queue and device name:
-    OCL_CHECK(err, cl::Context context(device, NULL, NULL, NULL, &err));
-    OCL_CHECK(err, cl::CommandQueue queue(context, device, CL_QUEUE_PROFILING_ENABLE, &err));
-    OCL_CHECK(err, std::string device_name = device.getInfo<CL_DEVICE_NAME>(&err));
-
-    std::cout << "INFO: Device found - " << device_name << std::endl;
-
-    // Load binary:
-    unsigned fileBufSize;
-    std::string binaryFile = xcl::find_binary_file(device_name, "krnl_colordetect");
-    cl::Program::Binaries bins = xcl::import_binary_file(binaryFile);
-    devices.resize(1);
-    OCL_CHECK(err, cl::Program program(context, devices, bins, NULL, &err));
-
-    // Create a kernel:
-    OCL_CHECK(err, cl::Kernel kernel(program, "color_detect", &err));
-
-    // Allocate the buffers:
-    OCL_CHECK(err, cl::Buffer buffer_inImage(context, CL_MEM_READ_ONLY, image_in_size, NULL, &err));
-
-    OCL_CHECK(err, cl::Buffer buffer_lThres(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, vector_size,
-                                            low_thresh.data(), &err));
-
-    OCL_CHECK(err, cl::Buffer buffer_hThres(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, vector_size,
-                                            high_thresh.data(), &err));
-
-    OCL_CHECK(err, cl::Buffer buffer_shapeKrnl(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, vector_size,
-                                               shape.data(), &err));
-    // printf("finished shape allocation\n");
-    OCL_CHECK(err, cl::Buffer buffer_outImage(context, CL_MEM_WRITE_ONLY, image_out_size, NULL, &err));
-
-    // Set kernel arguments:
-    OCL_CHECK(err, err = kernel.setArg(0, buffer_inImage));
-    OCL_CHECK(err, err = kernel.setArg(1, buffer_lThres));
-    OCL_CHECK(err, err = kernel.setArg(2, buffer_hThres));
-    OCL_CHECK(err, err = kernel.setArg(3, buffer_shapeKrnl));
-    OCL_CHECK(err, err = kernel.setArg(4, buffer_outImage));
-    OCL_CHECK(err, err = kernel.setArg(5, rows));
-    OCL_CHECK(err, err = kernel.setArg(6, cols));
-    // printf("finished set arguments\n");
-
-    // Intialize the buffers:
-    cl::Event event;
-
-    OCL_CHECK(err,
-              queue.enqueueWriteBuffer(buffer_inImage, // buffer on the FPGA
-                                       CL_TRUE,        // blocking call
-                                       0,              // buffer offset in bytes
-                                       image_in_size,  // Size in bytes
-                                       in_img.data     // Pointer to the data to copy
-                                       ));
-
-    // Copy input data to device global memory
-    OCL_CHECK(err, err = queue.enqueueMigrateMemObjects({buffer_lThres, buffer_hThres, buffer_shapeKrnl}, 0));
-
-    // Execute the kernel:
-    OCL_CHECK(err, err = queue.enqueueTask(kernel, NULL, &event));
-    clWaitForEvents(1, (const cl_event*)&event);
-
-    // Copy Result from Device Global Memory to Host Local Memory
-    queue.enqueueReadBuffer(buffer_outImage, // This buffers data will be read
-                            CL_TRUE,         // blocking call
-                            0,               // offset
-                            image_out_size,
-                            out_img.data // Data will be stored here
-                            );
-
-    // Clean up:
-    queue.finish();
+    color_detect(
+        (ap_uint<INPUT_PTR_WIDTH>*)in_img.data,
+        (ap_uint<OUTPUT_PTR_WIDTH>*)out_img.data, 
+        low_thresh, 
+        high_thresh, 
+        shape,
+        rows, 
+        cols
+    );
 
     // Write down the kernel output image:
     cv::imwrite("output.png", out_img);
