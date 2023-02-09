@@ -16,12 +16,12 @@ CFLAGS_PULP += -g -include $(PULP_SDK_HOME)/install/hero/hero-sim/cl_config.h
 LDFLAGS_PULP += -lomptarget-pulp -lrt
 
 # Link AROV library
-LIBPATHS += -L$(ESWEEK_DIR)/sw/libs/arov_ncl1_nacc16/libarov-target/lib/
+LIBPATHS += -L$(HOME)/workspace_tools/vitis/richie-acc-bench/fast/sw/libs/libarov-target/lib/
 LDFLAGS_PULP += -larov-target
 LDFLAGS += -larov-target
 
 # Link HWPE libraries
-LIBPATHS += -L$(ESWEEK_DIR)/sw/libs/arov_ncl1_nacc16/libhwpe/hwpe_cl0_lic0/lib/hwpe_cl0_lic0
+LIBPATHS += -L$(HOME)/workspace_tools/vitis/richie-acc-bench/fast/sw/libs/libhwpe/hwpe_cl0_lic0/lib/hwpe_cl0_lic0
 
 LDFLAGS_PULP += -lhwpe_cl0_lic0
 
