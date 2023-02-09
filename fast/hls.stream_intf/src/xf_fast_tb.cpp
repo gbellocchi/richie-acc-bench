@@ -23,8 +23,8 @@ int main(int argc, char** argv) {
 
     // Parameters
     uchar_t threshold = 20; // threshold
-    unsigned short imgwidth = in_img.cols;
-    unsigned short imgheight = in_img.rows;
+    // unsigned short imgwidth = in_img.cols;
+    // unsigned short imgheight = in_img.rows;
 
     std::vector<cv::KeyPoint> keypoints;
     
@@ -58,18 +58,32 @@ int main(int argc, char** argv) {
 	}
 
     // DUT call
-    fast_corner_detect(stream_in, stream_out, threshold, imgheight, imgwidth);
+    fast_corner_detect(stream_in, stream_out, threshold, HEIGHT, WIDTH);
 
-    // // Convert Stream to Mat
-	// for (int y = 0; y < HEIGHT; y++){
-	// 	for (int x = 0; x < WIDTH; x++){
-    //         ap_axiu<PTR_WIDTH,1,1,1> value = stream_out.read();
-    //         uchar value2 = value.data;
-    //         out_hls.at<uchar>(y, x) = value2;
-	// 		// ap_axiu<PTR_WIDTH,1,1,1> value = stream_out.read();
-    //         // out_hls.at<uchar>(y, x) = uchar(value);
-	// 	}
-	// }
+    // Convert Stream to Mat
+	for (int y = 0; y < HEIGHT; y++){
+		for (int x = 0; x < WIDTH; x++){
+
+            int idx = y * HEIGHT + x;
+
+            // Temporary value stored here
+            ap_int<PTR_WIDTH> value;
+            cv::Vec3i cv_pix;
+
+            // Read from output stream
+            ap_axiu<PTR_WIDTH,1,1,1> stream_tmp = stream_out.read();
+
+            // Extract single data from stream
+            cv_pix[idx] = stream_tmp.data;
+
+            // if (value != 0) std::cout << "\n\tValue = " << value << std::endl;
+            // // unsigned char value = out_hls.at<unsigned char>(j, i);
+
+            // // Copy to Mat
+            // out_hls.at<uchar>(y, x) = uchar(value);            
+            // out_hls.at<cv::Vec3b>(y, x) = cv_pix[0];
+		}
+	}
 
     // Post-processing - Golden + HLS outputs
     std::vector<cv::Point> hls_points;
@@ -83,7 +97,7 @@ int main(int argc, char** argv) {
 
     int nsize = keypoints.size();
 
-    printf("ocvpoints:%d=\n", nsize);
+    printf("\n\tOCV points (size) = %d\n", nsize);
 
     for (int i = 0; i < nsize; i++) {
         int x = keypoints[i].pt.x;
@@ -106,6 +120,7 @@ int main(int argc, char** argv) {
 
     out_img = in_gray.clone();
 
+    // Check DUT points
     for (int j = 0; j < HEIGHT; j++) {
         for (int i = 0; i < WIDTH; i++) {
 
@@ -114,6 +129,8 @@ int main(int argc, char** argv) {
 
             // Extract single data from stream
             ap_int<PTR_WIDTH> value = stream_tmp.data;
+
+            if (value != 0) std::cout << "\n\tValue = " << value << std::endl;
     //         unsigned char value = out_hls.at<unsigned char>(j, i);
 
             if (value != 0) {

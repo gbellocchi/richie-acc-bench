@@ -48,6 +48,6 @@ void fast_corner_detect(
 
     // // Convert xf::cv::Mat object to output stream:
     xf::cv::xfMat2AXIvideo<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1>(imgOutput, img_out);
-
+    
     return;
 } // End of kernel
