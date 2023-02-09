@@ -23,9 +23,9 @@ static constexpr int __XF_DEPTH_FILTER = (FILTER_SIZE * FILTER_SIZE);
 void color_detect(
             ap_uint<INPUT_PTR_WIDTH>* img_in,
             ap_uint<OUTPUT_PTR_WIDTH>* img_out,
-            unsigned char* low_thresh,
-            unsigned char* high_thresh,
-            unsigned char* process_shape,
+            unsigned char low_thresh[FILTER_SIZE*FILTER_SIZE],
+            unsigned char high_thresh[FILTER_SIZE*FILTER_SIZE],
+            unsigned char process_shape[FILTER_SIZE*FILTER_SIZE],
             int rows,
             int cols
 ) {
@@ -33,9 +33,18 @@ void color_detect(
     #pragma HLS INTERFACE axis register register_mode=off port=img_in
     #pragma HLS INTERFACE axis register register_mode=off port=img_out
 
-    #pragma HLS INTERFACE axis register register_mode=off port=low_thresh
-    #pragma HLS INTERFACE axis register register_mode=off port=high_thresh
-    #pragma HLS INTERFACE axis register register_mode=off port=process_shape
+    // #pragma HLS INTERFACE axis register register_mode=off port=low_thresh
+    // #pragma HLS INTERFACE axis register register_mode=off port=high_thresh
+    // #pragma HLS INTERFACE axis register register_mode=off port=process_shape
+
+    #pragma HLS INTERFACE ap_none port=low_thresh 
+    #pragma HLS array_partition variable=low_thresh
+
+    #pragma HLS INTERFACE ap_none port=high_thresh 
+    #pragma HLS array_partition variable=high_thresh 
+
+    #pragma HLS INTERFACE ap_none port=process_shape 
+    #pragma HLS array_partition variable=process_shape
 
     xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1> imgInput(rows, cols);
     xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1> rgb2hsv(rows, cols);

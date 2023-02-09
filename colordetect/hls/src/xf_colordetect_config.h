@@ -65,9 +65,9 @@
 void color_detect(
             ap_uint<INPUT_PTR_WIDTH>* img_in,
             ap_uint<OUTPUT_PTR_WIDTH>* img_out,
-            unsigned char* low_thresh,
-            unsigned char* high_thresh,
-            unsigned char* process_shape,
+            unsigned char low_thresh[FILTER_SIZE*FILTER_SIZE],
+            unsigned char high_thresh[FILTER_SIZE*FILTER_SIZE],
+            unsigned char process_shape[FILTER_SIZE*FILTER_SIZE],
             int rows,
             int cols
 );

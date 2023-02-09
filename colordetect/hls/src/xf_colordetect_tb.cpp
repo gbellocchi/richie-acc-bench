@@ -109,6 +109,7 @@ int main(int argc, char** argv) {
 
     for (int i = 0; i < (FILTER_SIZE * FILTER_SIZE); i++) {
         shape[i] = element.data[i];
+        printf("\n\t SHAPE[i] = %d", shape[i]);
     }
 
     int rows = in_img.rows;
