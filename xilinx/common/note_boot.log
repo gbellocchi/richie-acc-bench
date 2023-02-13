@@ -1,0 +1,2 @@
+setenv xilinx_bootargs "console=ttyPS0,115200n8 earlycon clk_ignore_unused cpuidle.off=1 ip=dhcp root=/dev/nfs rootfstype=nfs nfsroot=172.19.0.6:/storage/srv/rootfs/xil_exp,tcp,nolock,nfsvers=3 rw uio_pdrv_genirq.of_id=generic-uio cma=256M"
+setenv xilinx_boot "dhcp; tftpb 0x200000 gbellocchi/Image; tftpb 0x7000000 gbellocchi/system.dtb; setenv bootargs ${xilinx_bootargs}; booti 0x200000 - 0x7000000"

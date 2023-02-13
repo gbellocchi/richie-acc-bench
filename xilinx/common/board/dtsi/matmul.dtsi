@@ -1,0 +1,32 @@
+/ {
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+	 
+		reserved: buffer@0 {
+			compatible = "shared-dma-pool";
+			no-map;
+			reg = <0x0 0x10000000 0x0 0x1000000>;
+			linux,cma-default;
+		};
+	};
+
+    amba_pl: amba_pl@0 {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		compatible = "simple-bus";
+		ranges ;
+		mmult_hw_0: mmult_hw@a0000000 {
+			clock-names = "ap_clk";
+			clocks = <&zynqmp_clk 71>;
+			compatible = "generic-uio";
+			interrupt-names = "interrupt";
+			interrupt-parent = <&gic>;
+			interrupts = <0 89 4>;
+			reg = <0x0 0xa0000000 0x0 0x10000>;
+			xlnx,s-axi-control-addr-width = <0x6>;
+			xlnx,s-axi-control-data-width = <0x20>;
+		};
+	};
+};
