@@ -48,8 +48,9 @@
 // Set the input and output pixel depth:
 #define IN_TYPE XF_8UC3
 #define OUT_TYPE XF_8UC1
-#define INPUT_PTR_WIDTH 32
-#define OUTPUT_PTR_WIDTH 8
+#define PULP_PTR_WIDTH 32
+#define INPUT_PTR_WIDTH PULP_PTR_WIDTH
+#define OUTPUT_PTR_WIDTH PULP_PTR_WIDTH // 8
 
 // Resolve mask shape:
 #if KERNEL_SHAPE == 0
@@ -63,13 +64,10 @@
 #endif
 
 void color_detect(
-            ap_uint<INPUT_PTR_WIDTH>* img_in,
-            ap_uint<OUTPUT_PTR_WIDTH>* img_out,
-            unsigned char low_thresh[FILTER_SIZE*FILTER_SIZE],
-            unsigned char high_thresh[FILTER_SIZE*FILTER_SIZE],
-            unsigned char process_shape[FILTER_SIZE*FILTER_SIZE],
-            int rows,
-            int cols
+    ap_uint<INPUT_PTR_WIDTH>* img_in,
+    ap_uint<OUTPUT_PTR_WIDTH>* img_out,
+    int rows,
+    int cols
 );
 
 #endif

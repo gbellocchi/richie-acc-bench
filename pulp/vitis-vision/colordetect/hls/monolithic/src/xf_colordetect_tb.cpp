@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
 
     for (int i = 0; i < (FILTER_SIZE * FILTER_SIZE); i++) {
         shape[i] = element.data[i];
-        printf("\n\t SHAPE[i] = %d", shape[i]);
+        // printf("\n\t SHAPE[i] = %d\n", shape[i]);
     }
 
     int rows = in_img.rows;
@@ -126,9 +126,6 @@ int main(int argc, char** argv) {
     color_detect(
         (ap_uint<INPUT_PTR_WIDTH>*)in_img.data,
         (ap_uint<OUTPUT_PTR_WIDTH>*)out_img.data, 
-        low_thresh, 
-        high_thresh, 
-        shape,
         rows, 
         cols
     );

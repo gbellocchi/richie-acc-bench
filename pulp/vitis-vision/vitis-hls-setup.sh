@@ -8,7 +8,7 @@ source /var/pkg/ritchie/Xilinx/Vitis/2022.2/settings64.sh
 export DEVICE=/var/pkg/ritchie/Xilinx/Vitis/2022.2/base_platforms/xilinx_zcu102_base_202220_1/xilinx_zcu102_base_202220_1.xpfm
 export XPART=xczu9eg-ffvb1156-2-e
 
-export CSIM=0
+export CSIM=1
 export CSYNTH=1
 export COSIM=0
 

@@ -17,7 +17,7 @@
 ROOT 			= $(patsubst %/,%, $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
 SRC_DIR 		= $(ROOT)/src
-TCL_DIR 		= $(ROOT)/../../common/tcl
+TCL_DIR 		= $(ROOT)/../../../common/tcl
 RTL_DIR 		= $(ROOT)/rtl
 
 PRJ_NAME 		:= colordetect.prj
