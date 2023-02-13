@@ -1,0 +1,5 @@
+/mmult_hw_proj/
+*.log
+*.str
+*.jou
+rtl/*

@@ -1,0 +1,21 @@
+
+|-------------------|
+| Test - Beginning. |
+|-------------------|
+
+Stripe_len in         - 4096        
+Stripe_len in  (B)    - 16384 B      
+Stripe_len in  (kB)   - 16.000 kB   
+Stripe_len out        - 64        
+Stripe_len out (B)    - 256 B      
+Stripe_len out (kB)   - 0.250 kB   
+TCDM occupation (%)   - 25.800 %  
+TCDM size (kB)        - 128 kB  
+
+|-----------------------|
+| Execute MMUL on PULP. |
+|-----------------------|
+
+Starting program execution.
+Kernel Time (cycles): 484!
+^C
