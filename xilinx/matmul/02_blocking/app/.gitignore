@@ -1,0 +1,8 @@
+# Ignore everything
+*.ll
+*.deps
+*.dis
+*app
+
+# git files
+!.gitignore

@@ -1,0 +1,3 @@
+.deps/
+*.log
+/src/xmmult_hw*
