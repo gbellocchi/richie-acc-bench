@@ -26,7 +26,7 @@ if {![info exists CLKP]} {
 open_project -reset $PROJ
 
 add_files "${CPP_TOP_PATH}" -cflags "-I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -D__SDSVHLS__ -std=c++0x" -csimflags "-I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -D__SDSVHLS__ -std=c++0x"
-add_files -tb "${CPP_TB_PATH}" -cflags "-I${OPENCV_INCLUDE} -I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -D__SDSVHLS__ -std=c++0x" -csimflags "-I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -D__SDSVHLS__ -std=c++0x"
+add_files -tb "${CPP_TB_PATH}" -cflags "-I${OPENCV_INCLUDE} -I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -I ${GENHFILE_DIR} -D__SDSVHLS__ -std=c++0x" -csimflags "-I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -I ${GENHFILE_DIR} -D__SDSVHLS__ -std=c++0x"
 set_top ${ACC_NAME}
 
 open_solution -reset $SOLN
