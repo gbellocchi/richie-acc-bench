@@ -27,6 +27,15 @@
 #include <time.h>
 #include <errno.h>
 
+/* IO images (OpenCV). */
+
+typedef struct {
+  int w;
+  int h;
+  int c;
+  float *data;
+} image;
+
 /* System. */
 
 #include <common_structs/def_struct_soc_perf_eval.h>

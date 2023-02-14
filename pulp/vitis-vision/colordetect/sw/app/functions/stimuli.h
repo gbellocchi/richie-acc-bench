@@ -16,6 +16,7 @@
 #define __STIMULI_H__
 
 // Stimuli
-#include "inc/stim/128x128.png"
+#include "inc/128x128/in_img.h"
+// #include "inc/128x128/golden_out_img.h"
 
 #endif
