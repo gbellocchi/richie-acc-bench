@@ -18,6 +18,7 @@ ROOT 			= $(patsubst %/,%, $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
 SRC_DIR 		= $(ROOT)/src
 TCL_DIR 		= $(ROOT)/../../../common/tcl
+GENHFILE_DIR	= $(ROOT)/../../../common/gen_Hfile
 RTL_DIR 		= $(ROOT)/rtl
 
 PRJ_NAME 		:= colordetect.prj
@@ -261,6 +262,7 @@ setup: | check_part #check_opencv
 	@echo 'set OPENCV_INCLUDE "$(OPENCV_INCLUDE)"' >> ./settings.tcl
 	@echo 'set OPENCV_LIB "$(OPENCV_LIB)"' >> ./settings.tcl
 	@echo 'set CUR_DIR "$(CUR_DIR)"' >> ./settings.tcl
+	@echo 'set GENHFILE_DIR "$(GENHFILE_DIR)"' >> ./settings.tcl
 	@echo "Configured: settings.tcl"
 	@echo "----"
 	@cat ./settings.tcl

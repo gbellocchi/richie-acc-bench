@@ -97,10 +97,6 @@ void color_detect(
     // Convert _dst xf::cv::Mat object to output array:
     xf::cv::xfMat2Array<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(imgOutput, img_out);
 
-    // for (int i = 0; i < ; i++) {
-    //     img_out[i] = 1;
-    // }
-
     return;
 
 } // End of kernel

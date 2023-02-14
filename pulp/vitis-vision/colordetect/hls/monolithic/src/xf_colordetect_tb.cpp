@@ -15,8 +15,10 @@
  */
 
 #include "common/xf_headers.hpp"
-
 #include "xf_colordetect_config.h"
+
+#include <gen_Hfile.h> // to generate header files for stimuli, golden data, etc.
+
 // OpenCV reference function:
 void colordetect_ref(cv::Mat& _src, cv::Mat& _dst, unsigned char* nLowThresh, unsigned char* nHighThresh) {
     // Temporary matrices for processing
@@ -49,6 +51,7 @@ void colordetect_ref(cv::Mat& _src, cv::Mat& _dst, unsigned char* nLowThresh, un
     cv::dilate(_dst, _dst, element, cv::Point(-1, -1), 1, cv::BORDER_CONSTANT);
 
     cv::erode(_dst, _dst, element, cv::Point(-1, -1), 1, cv::BORDER_CONSTANT);
+
 }
 
 int main(int argc, char** argv) {
@@ -120,9 +123,7 @@ int main(int argc, char** argv) {
     // Reference function:
     colordetect_ref(in_img, ocv_ref, low_thresh, high_thresh);
 
-    // Write down reference and input image:
-    cv::imwrite("outputref.png", ocv_ref);
-
+    // DUT
     color_detect(
         (ap_uint<INPUT_PTR_WIDTH>*)in_img.data,
         (ap_uint<OUTPUT_PTR_WIDTH>*)out_img.data, 
@@ -130,13 +131,9 @@ int main(int argc, char** argv) {
         cols
     );
 
-    // Write down the kernel output image:
-    cv::imwrite("output.png", out_img);
-
     // Results verification:
     int cnt = 0;
     cv::absdiff(ocv_ref, out_img, diff);
-    cv::imwrite("diff.png", diff);
 
     for (int i = 0; i < diff.rows; ++i) {
         for (int j = 0; j < diff.cols; ++j) {
@@ -154,6 +151,34 @@ int main(int argc, char** argv) {
         fprintf(stderr, "ERROR: Test Failed.\n ");
         return EXIT_FAILURE;
     }
+
+    // ------------------------------------------------------------------ //
+
+    // Write down images
+    cv::imwrite("in_img.png", in_img);
+    cv::imwrite("golden_out_img.png", ocv_ref);
+    cv::imwrite("output.png", out_img);
+    cv::imwrite("diff.png", diff);
+
+    // Convert input Mat img to array
+    char* in_img_array = (char*)malloc(HEIGHT*WIDTH*sizeof(char));
+	for (int y = 0; y < HEIGHT; y++){
+		for (int x = 0; x < WIDTH; x++){
+			in_img_array[y * HEIGHT + x] = in_img.at<char>(y, x);
+		}
+	}
+
+    // Convert golden Mat img to array
+    char* golden_img_array = (char*)malloc(HEIGHT*WIDTH*sizeof(char));
+	for (int y = 0; y < HEIGHT; y++){
+		for (int x = 0; x < WIDTH; x++){
+			golden_img_array[y * HEIGHT + x] = ocv_ref.at<char>(y, x);
+		}
+	}
+
+    // Create output header files
+    gen_Hfile("in_img_small", in_img_array, HEIGHT, WIDTH, 32);
+    gen_Hfile("golden_out_img_small", golden_img_array, HEIGHT, WIDTH, 8);
 
     return 0;
 }
