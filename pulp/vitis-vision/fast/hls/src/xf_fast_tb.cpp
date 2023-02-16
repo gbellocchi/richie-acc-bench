@@ -29,13 +29,12 @@ int main(int argc, char** argv) {
     }
 
     std::vector<cv::KeyPoint> keypoints;
-
+    
     uchar_t threshold = 20; // threshold
 
     cvtColor(in_img, in_gray, CV_BGR2GRAY);
 
-    // OPenCV reference function
-
+    // Golden model
     cv::FAST(in_gray, keypoints, threshold, NMS);
 
     unsigned short imgwidth = in_img.cols;
@@ -43,14 +42,20 @@ int main(int argc, char** argv) {
 
     out_hls.create(in_gray.rows, in_gray.cols, CV_8U);
 
-    // Call the top function
-    fast_corner_detect(
-        (ap_uint<PTR_WIDTH>*)in_gray.data, 
-        (ap_uint<PTR_WIDTH>*)out_hls.data, 
-        threshold,
-        imgheight, 
-        imgwidth
-    );
+    // IO streams
+    stream_t stream_in("stream_in");
+    stream_t stream_out("stream_out");
+
+    interface_t value_in, value_out;
+
+    // Convert Mat to Stream
+    cvMat2AXIvideoxf<NPC1>(in_gray, stream_in);
+
+    // DUT call
+    fast_corner_detect((stream_t &)stream_in, (stream_t &)stream_out, threshold, imgheight, imgwidth);
+
+    // Convert Stream to Mat
+    AXIvideo2cvMatxf<NPC1, PTR_WIDTH>(stream_out, out_hls);
 
     std::vector<cv::Point> hls_points;
     std::vector<cv::Point> ocv_points;
