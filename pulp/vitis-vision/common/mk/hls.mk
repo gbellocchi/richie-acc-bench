@@ -225,6 +225,7 @@ run: data setup runhls
 setup: | check_part #check_opencv
 	@rm -f ./settings.tcl
 	@if [ -n "$$CLKP" ]; then echo 'set CLKP $(CLKP)' >> ./settings.tcl ; fi
+	@echo 'set PRJ_ROOT $(PRJ_ROOT)' >> ./settings.tcl
 	@echo 'set PRJ_NAME $(PRJ_NAME)' >> ./settings.tcl
 	@echo 'set SOL_NAME $(SOL_NAME)' >> ./settings.tcl
 	@echo 'set ACC_NAME $(ACC_NAME)' >> ./settings.tcl
