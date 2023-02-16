@@ -49,8 +49,8 @@
 #define IN_TYPE XF_8UC3
 #define OUT_TYPE XF_8UC1
 #define PULP_PTR_WIDTH 32
-#define INPUT_PTR_WIDTH PULP_PTR_WIDTH
-#define OUTPUT_PTR_WIDTH PULP_PTR_WIDTH // 8
+#define INPUT_PTR_WIDTH 32
+#define OUTPUT_PTR_WIDTH 8
 
 // Resolve mask shape:
 #if KERNEL_SHAPE == 0

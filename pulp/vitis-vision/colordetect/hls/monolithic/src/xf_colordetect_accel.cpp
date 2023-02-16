@@ -27,8 +27,8 @@ void color_detect(
     int cols
 ) {
 
-    #pragma HLS INTERFACE axis register register_mode=off port=img_in
-    #pragma HLS INTERFACE axis register register_mode=off port=img_out
+    #pragma HLS INTERFACE axis register register_mode=off port=img_in depth=__XF_DEPTH
+    #pragma HLS INTERFACE axis register register_mode=off port=img_out depth=__XF_DEPTH_OUT
 
     xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1> imgInput(rows, cols);
     xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1> rgb2hsv(rows, cols);
