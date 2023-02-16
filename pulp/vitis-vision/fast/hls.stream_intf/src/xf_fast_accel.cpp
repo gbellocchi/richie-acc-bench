@@ -19,35 +19,47 @@
 static constexpr int __XF_DEPTH = (HEIGHT * WIDTH * (XF_PIXELWIDTH(TYPE, NPC1)) / 8) / (PTR_WIDTH / 8);
 
 void fast_corner_detect(
-    // Data
     stream_t &img_in, 
     stream_t &img_out, 
-    // Parameters
     int threshold, 
     int rows, 
     int cols
 ) {
-    #pragma HLS INTERFACE axis register both port=&img_in
-    #pragma HLS INTERFACE axis register both port=&img_out
+    #pragma HLS INTERFACE axis register both port=img_in depth=__XF_DEPTH
+    #pragma HLS INTERFACE axis register both port=img_out depth=__XF_DEPTH
 
-    // #pragma HLS INTERFACE axis port=threshold
-
-    int _rows = HEIGHT;
-    int _cols = WIDTH;
-
-    xf::cv::Mat<TYPE, HEIGHT, WIDTH, NPC1> imgInput(_rows, _cols);
-    xf::cv::Mat<TYPE, HEIGHT, WIDTH, NPC1> imgOutput(_rows, _cols);
+    xf::cv::Mat<TYPE, HEIGHT, WIDTH, NPC1> imgInput(HEIGHT, WIDTH);
+    // #pragma HLS STREAM variable=imgInput.data depth=__XF_DEPTH
+    xf::cv::Mat<TYPE, HEIGHT, WIDTH, NPC1> imgOutput(HEIGHT, WIDTH);
+    // #pragma HLS STREAM variable=imgOutput.data depth=__XF_DEPTH
 
     #pragma HLS DATAFLOW
 
+    // stream_t local_img_in("local_img_in");
+    // stream_t local_img_out("local_img_out");
+
+    // interface_t value_in, value_out;
+
+    // value_in = img_in.read();
+    // local_img_in.read(value_in);
+
     // Convert stream in to xf::cv::Mat
     xf::cv::AXIvideo2xfMat<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1>(img_in, imgInput);
+
+    // for (int i = 0; i < rows; i++){
+	// 	for (int j = 0; j < cols; j++){
+    //         img_in.read(value_in);
+    //         imgInput.at<interface_t>(i, j) = value_in;
+    //         // printf("\tOUT value: %x\n", value_out);
+    //     }
+    // }
 
     // Run xfOpenCV kernel:
     xf::cv::fast<NMS, TYPE, HEIGHT, WIDTH, NPC1>(imgInput, imgOutput, threshold);
 
     // // Convert xf::cv::Mat object to output stream:
     xf::cv::xfMat2AXIvideo<PTR_WIDTH, TYPE, HEIGHT, WIDTH, NPC1>(imgOutput, img_out);
-    
-    return;
-} // End of kernel
+
+    // value_out = local_img_out.read();
+    // img_out.read(value_out);
+}

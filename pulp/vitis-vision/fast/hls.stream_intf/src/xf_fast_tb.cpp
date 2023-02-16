@@ -18,74 +18,62 @@
 #include "xf_fast_config.h"
 
 int main(int argc, char** argv) {
-    // IO data
-    cv::Mat in_img, in_gray, out_img, out_img_ocv, out_hls;
+    cv::Mat in_img, out_img, out_img_ocv, out_hls;
+    cv::Mat in_gray;
 
-    // Parameters
-    uchar_t threshold = 20; // threshold
-    // unsigned short imgwidth = in_img.cols;
-    // unsigned short imgheight = in_img.rows;
-
-    std::vector<cv::KeyPoint> keypoints;
-    
-    // Read golden data
-    in_img = cv::imread(argv[1], -1); // reading in the color image (128x128.png)
+    in_img = cv::imread(argv[1], 1); // reading in the color image
 
     if (!in_img.data) {
         fprintf(stderr, "Failed to load the image ... %s\n ", argv[1]);
         return -1;
     }
 
-    // Additional image processing
+    std::vector<cv::KeyPoint> keypoints;
+    
+    uchar_t threshold = 20; // threshold
+
     cvtColor(in_img, in_gray, CV_BGR2GRAY);
 
-    /* Create the hardware streams */
-    // out_hls.create(in_gray.rows, in_gray.cols, CV_8U);
-
-    // Golden model (OpenCV reference function)
+    // Golden model
     cv::FAST(in_gray, keypoints, threshold, NMS);
 
-    // // IO streams
-    hls::stream<ap_axiu<PTR_WIDTH,1,1,1>> stream_in;
-    hls::stream<ap_axiu<PTR_WIDTH,1,1,1>> stream_out;
+    unsigned short imgwidth = in_img.cols;
+    unsigned short imgheight = in_img.rows;
+
+    out_hls.create(in_gray.rows, in_gray.cols, CV_8U);
+
+    // IO streams
+    stream_t stream_in("stream_in");
+    stream_t stream_out("stream_out");
+
+    interface_t value_in, value_out;
 
 	// Convert Mat to Stream
-	for (int y = 0; y < HEIGHT; y++){
-		for (int x = 0; x < WIDTH; x++){
-			ap_axiu<PTR_WIDTH,1,1,1> value = in_gray.at<ap_axiu<PTR_WIDTH,1,1,1>>(y, x); // depth_t(double(src.at<uchar>(y, x) + 0.5) / double(255.0));
-			stream_in.write(value);
-		}
-	}
+	// for (int y = 0; y < HEIGHT; y++){
+	// 	for (int x = 0; x < WIDTH; x++){
+    //         value_in = in_gray.at<interface_t>(y, x); 
+    //         stream_in.write(value_in);
+	// 	}
+	// }
+
+    // Convert Mat to Stream
+    cvMat2AXIvideoxf<NPC1>(in_gray, stream_in);
 
     // DUT call
-    fast_corner_detect(stream_in, stream_out, threshold, HEIGHT, WIDTH);
+    fast_corner_detect((stream_t &)stream_in, (stream_t &)stream_out, threshold, imgheight, imgwidth);
+
+    // // // Convert Stream to Mat
+    // // for (int i = 0; i < out_hls.rows; i++){
+	// // 	for (int j = 0; j < out_hls.cols; j++){
+    // //         stream_out.read(value_out);
+    // //         out_hls.at<interface_t>(i, j) = value_out;
+    // //         // printf("\tOUT value: %x\n", value_out);
+    // //     }
+    // // }
 
     // Convert Stream to Mat
-	for (int y = 0; y < HEIGHT; y++){
-		for (int x = 0; x < WIDTH; x++){
+    AXIvideo2cvMatxf<NPC1, PTR_WIDTH>(stream_out, out_hls);
 
-            int idx = y * HEIGHT + x;
-
-            // Temporary value stored here
-            ap_int<PTR_WIDTH> value;
-            cv::Vec3i cv_pix;
-
-            // Read from output stream
-            ap_axiu<PTR_WIDTH,1,1,1> stream_tmp = stream_out.read();
-
-            // Extract single data from stream
-            cv_pix[idx] = stream_tmp.data;
-
-            // if (value != 0) std::cout << "\n\tValue = " << value << std::endl;
-            // // unsigned char value = out_hls.at<unsigned char>(j, i);
-
-            // // Copy to Mat
-            // out_hls.at<uchar>(y, x) = uchar(value);            
-            // out_hls.at<cv::Vec3b>(y, x) = cv_pix[0];
-		}
-	}
-
-    // Post-processing - Golden + HLS outputs
     std::vector<cv::Point> hls_points;
     std::vector<cv::Point> ocv_points;
     std::vector<cv::Point> common_points;
@@ -97,7 +85,7 @@ int main(int argc, char** argv) {
 
     int nsize = keypoints.size();
 
-    printf("\n\tOCV points (size) = %d\n", nsize);
+    printf("ocvpoints:%d=\n", nsize);
 
     for (int i = 0; i < nsize; i++) {
         int x = keypoints[i].pt.x;
@@ -117,22 +105,12 @@ int main(int argc, char** argv) {
         cv::circle(out_img_ocv, cv::Point(ocv_x, ocv_y), 5, cv::Scalar(0, 0, 255), 2, 8, 0);
     }
     cv::imwrite("output_ocv.png", out_img_ocv);
-
+    //
     out_img = in_gray.clone();
 
-    // Check DUT points
-    for (int j = 0; j < HEIGHT; j++) {
-        for (int i = 0; i < WIDTH; i++) {
-
-            // Read from output stream
-            ap_axiu<PTR_WIDTH,1,1,1> stream_tmp = stream_out.read();
-
-            // Extract single data from stream
-            ap_int<PTR_WIDTH> value = stream_tmp.data;
-
-            if (value != 0) std::cout << "\n\tValue = " << value << std::endl;
-    //         unsigned char value = out_hls.at<unsigned char>(j, i);
-
+    for (int j = 0; j < out_hls.rows; j++) {
+        for (int i = 0; i < out_hls.cols; i++) {
+            unsigned char value = out_hls.at<unsigned char>(j, i);
             if (value != 0) {
                 short int y, x;
                 y = j;
@@ -180,7 +158,7 @@ int main(int argc, char** argv) {
 
     cv::imwrite("output_hls.png", out_img);
 
-    // Results verification
+    // Results verification:
     float persuccess, perloss, pergain;
 
     int totalocv = ocv_points.size();

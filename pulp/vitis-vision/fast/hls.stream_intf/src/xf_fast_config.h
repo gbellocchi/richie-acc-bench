@@ -17,28 +17,45 @@
 #ifndef _XF_FAST_CONFIG_H_
 #define _XF_FAST_CONFIG_H_
 
+// Stream<-->Mat conversion (TB)
+#if !defined (__SYNTHESIS__)
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/core/core.hpp"
+#include "opencv2/opencv.hpp"
+#endif
+
 #include "hls_stream.h"
 #include "ap_int.h"
+
 #include "common/xf_common.hpp"
-#include "common/xf_infra.hpp" // AXIvideo2xfMat, xfMat2AXIvideo
 #include "common/xf_utility.hpp"
-#include "features/xf_fast.hpp"
-#include "xf_config_params.h"
+
+// Stream<-->Mat conversion (HLS)
+#include "common/xf_infra.hpp"
+
+#if !defined (__SYNTHESIS__)
+#include "common/xf_axi.hpp"
+#endif
 
 #include "imgproc/xf_inrange.hpp"
+
+// Application
+#include "features/xf_fast.hpp"
+#include "xf_config_params.h"
 
 // // Extra
 // #include "common/xf_sw_utils.hpp"
 
 // Resolve optimization type:
-#if RO
-#define NPC1 XF_NPPC8
-#define PTR_WIDTH 64
-#endif
-#if NO
+// #if RO
+// #define NPC1 XF_NPPC8
+// #define PTR_WIDTH 64
+// #endif
+// #if NO
 #define NPC1 XF_NPPC1
 #define PTR_WIDTH 32
-#endif
+// #endif
 
 // Set the pixel depth:
 #define TYPE XF_8UC1
@@ -60,10 +77,8 @@ typedef hls::stream<interface_t> stream_t;
 // };
 
 void fast_corner_detect(
-    // Data
     stream_t &img_in, 
     stream_t &img_out, 
-    // Parameters
     int threshold, 
     int rows, 
     int cols
