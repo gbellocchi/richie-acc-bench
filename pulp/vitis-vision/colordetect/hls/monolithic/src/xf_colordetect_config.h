@@ -17,10 +17,30 @@
 #ifndef _XF_COLORDETECT_CONFIG_H_
 #define _XF_COLORDETECT_CONFIG_H_
 
+// Stream<-->Mat conversion (TB)
+#if !defined (__SYNTHESIS__)
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/core/core.hpp"
+#include "opencv2/opencv.hpp"
+#endif
+
 #include "hls_stream.h"
 #include "ap_int.h"
+
 #include "common/xf_common.hpp"
 #include "common/xf_utility.hpp"
+
+// Stream<-->Mat conversion (HLS)
+#include "common/xf_infra.hpp"
+
+#if !defined (__SYNTHESIS__)
+#include "common/xf_axi.hpp"
+#endif
+
+// #include "imgproc/xf_inrange.hpp"
+
+// Application
 #include "imgproc/xf_channel_combine.hpp"
 #include "imgproc/xf_colorthresholding.hpp"
 #include "imgproc/xf_bgr2hsv.hpp"
@@ -50,7 +70,7 @@
 #define OUT_TYPE XF_8UC1
 #define PULP_PTR_WIDTH 32
 #define INPUT_PTR_WIDTH 32
-#define OUTPUT_PTR_WIDTH 8
+#define OUTPUT_PTR_WIDTH 32
 
 // Resolve mask shape:
 #if KERNEL_SHAPE == 0
@@ -63,9 +83,13 @@
 #define XF_KERNEL_SHAPE XF_SHAPE_RECT
 #endif
 
+// Streaming interface
+typedef ap_axiu<INPUT_PTR_WIDTH,1,1,1> interface_t;
+typedef hls::stream<interface_t> stream_t;
+
 void color_detect(
-    ap_uint<INPUT_PTR_WIDTH>* img_in,
-    ap_uint<OUTPUT_PTR_WIDTH>* img_out,
+    stream_t &img_in, 
+    stream_t &img_out, 
     int rows,
     int cols
 );

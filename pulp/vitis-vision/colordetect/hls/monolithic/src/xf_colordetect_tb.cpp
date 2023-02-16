@@ -123,13 +123,23 @@ int main(int argc, char** argv) {
     // Reference function:
     colordetect_ref(in_img, ocv_ref, low_thresh, high_thresh);
 
+    // IO streams
+    stream_t stream_in("stream_in");
+    stream_t stream_out("stream_out");
+
+    // Convert Mat to Stream
+    cvMat2AXIvideoxf<NPC1>(in_img, stream_in);
+
     // DUT
     color_detect(
-        (ap_uint<INPUT_PTR_WIDTH>*)in_img.data,
-        (ap_uint<OUTPUT_PTR_WIDTH>*)out_img.data, 
+        (stream_t &)stream_in, 
+        (stream_t &)stream_out,
         rows, 
         cols
     );
+
+    // Convert Stream to Mat
+    AXIvideo2cvMatxf<NPC1, OUTPUT_PTR_WIDTH>(stream_out, out_img);
 
     // Results verification:
     int cnt = 0;

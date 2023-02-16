@@ -21,14 +21,14 @@ static constexpr int __XF_DEPTH_OUT = (HEIGHT * WIDTH * (XF_PIXELWIDTH(OUT_TYPE,
 static constexpr int __XF_DEPTH_FILTER = (FILTER_SIZE * FILTER_SIZE);
 
 void color_detect(
-    ap_uint<INPUT_PTR_WIDTH>* img_in,
-    ap_uint<OUTPUT_PTR_WIDTH>* img_out,
+    stream_t &img_in, 
+    stream_t &img_out, 
     int rows,
     int cols
 ) {
 
-    #pragma HLS INTERFACE axis register register_mode=off port=img_in depth=__XF_DEPTH
-    #pragma HLS INTERFACE axis register register_mode=off port=img_out depth=__XF_DEPTH_OUT
+    #pragma HLS INTERFACE axis register both port=img_in depth=__XF_DEPTH
+    #pragma HLS INTERFACE axis register both port=img_out depth=__XF_DEPTH_OUT
 
     xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1> imgInput(rows, cols);
     xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1> rgb2hsv(rows, cols);
@@ -80,7 +80,8 @@ void color_detect(
     #pragma HLS DATAFLOW
     
     // Retrieve xf::cv::Mat objects from img_in data:
-    xf::cv::Array2xfMat<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1>(img_in, imgInput);
+    // xf::cv::Array2xfMat<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1>(img_in, imgInput);
+    xf::cv::AXIvideo2xfMat<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1>(img_in, imgInput);
 
     // Convert RGBA to HSV:
     xf::cv::bgr2hsv<IN_TYPE, HEIGHT, WIDTH, NPC1>(imgInput, rgb2hsv);
@@ -95,7 +96,8 @@ void color_detect(
     xf::cv::erode<XF_BORDER_CONSTANT, OUT_TYPE, HEIGHT, WIDTH, XF_KERNEL_SHAPE, FILTER_SIZE, FILTER_SIZE, ITERATIONS, NPC1>(imgHelper4, imgOutput, _kernel);
 
     // Convert _dst xf::cv::Mat object to output array:
-    xf::cv::xfMat2Array<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(imgOutput, img_out);
+    // xf::cv::xfMat2Array<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(imgOutput, img_out);
+    xf::cv::xfMat2AXIvideo<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(imgOutput, img_out);
 
     return;
 
