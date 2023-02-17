@@ -8,10 +8,6 @@ source /var/pkg/ritchie/Xilinx/Vitis/2022.2/settings64.sh
 export DEVICE=/var/pkg/ritchie/Xilinx/Vitis/2022.2/base_platforms/xilinx_zcu102_base_202220_1/xilinx_zcu102_base_202220_1.xpfm
 export XPART=xczu9eg-ffvb1156-2-e
 
-export CSIM=1
-export CSYNTH=1
-export COSIM=0
-
 export OPENCV_INCLUDE=$wks_tools/opencv/opencv/build/include
 export OPENCV_LIB=$wks_tools/opencv/opencv/build/lib
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$OPENCV_LIB

@@ -36,23 +36,33 @@ open_solution -reset $SOLN
 set_part $XPART
 create_clock -period $CLKP
 
-if {$CSIM == 1} {
+# C simulation
+if {$CSIM} {
   csim_design -ldflags "-L ${OPENCV_LIB} -lopencv_imgcodecs -lopencv_imgproc -lopencv_core -lopencv_highgui -lopencv_flann -lopencv_features2d" -argv " ${XF_PROJ_ROOT}/data/128x128.png "
 }
 
-if {$CSYNTH == 1} {
+# HLS synthesis
+if {$CSYNTH} {
   csynth_design
 }
 
-if {$COSIM == 1} {
+# Post-synthesis co-simulation
+if {($COSIM) && !($COSIM_GUI)} {
   cosim_design -ldflags "-L ${OPENCV_LIB} -lopencv_imgcodecs -lopencv_imgproc -lopencv_core -lopencv_highgui -lopencv_flann -lopencv_features2d" -argv " ${XF_PROJ_ROOT}/data/128x128.png "
 }
 
-if {$VIVADO_SYN == 1} {
+# Post-synthesis co-simulation (with Vivado GUI)
+if {($COSIM) && ($COSIM_GUI)} {
+  cosim_design -tool xsim -trace_level all -wave_debug -ldflags "-L ${OPENCV_LIB} -lopencv_imgcodecs -lopencv_imgproc -lopencv_core -lopencv_highgui -lopencv_flann -lopencv_features2d" -argv " ${XF_PROJ_ROOT}/data/128x128.png "
+}
+
+# Vivado synthesis
+if {$VIVADO_SYN} {
   export_design -flow syn -rtl verilog
 }
 
-if {$VIVADO_IMPL == 1} {
+# Vivado implementation
+if {$VIVADO_IMPL} {
   export_design -flow impl -rtl verilog
 }
 

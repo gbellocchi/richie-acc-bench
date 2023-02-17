@@ -235,6 +235,7 @@ setup: | check_part #check_opencv
 	@echo 'set CSIM $(CSIM)' >> ./settings.tcl
 	@echo 'set CSYNTH $(CSYNTH)' >> ./settings.tcl
 	@echo 'set COSIM $(COSIM)' >> ./settings.tcl
+	@echo 'set COSIM_GUI $(COSIM_GUI)' >> ./settings.tcl
 	@echo 'set VIVADO_SYN $(VIVADO_SYN)' >> ./settings.tcl
 	@echo 'set VIVADO_IMPL $(VIVADO_IMPL)' >> ./settings.tcl
 	@echo 'set VITIS_LIB_INCLUDE "$(VITIS_LIB_INCLUDE)"' >> ./settings.tcl

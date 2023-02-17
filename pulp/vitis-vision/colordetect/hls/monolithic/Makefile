@@ -16,6 +16,12 @@ PRJ_NAME 		:= colordetect.prj
 SOL_NAME 		:= sol1
 ACC_NAME 		:= color_detect
 
+# Vitis commands
+CSIM			?= 1
+CSYNTH			?= 1
+COSIM			?= 1
+COSIM_GUI		?= 0
+
 # Directories
 SRC_DIR 		= $(PRJ_ROOT)/src
 RTL_DIR 		= $(PRJ_ROOT)/rtl
