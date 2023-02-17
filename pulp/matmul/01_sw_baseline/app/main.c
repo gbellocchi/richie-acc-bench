@@ -27,7 +27,7 @@
 
 #include <hero-target.h>
 
-#include "../../common/overlay-bench.h"
+#include "../../../common/overlay-bench.h"
 
 /* Checksum. */
 
@@ -95,7 +95,7 @@ void mmult_sw(uint32_t* in1, uint32_t* in2, uint32_t* out_sw, uint32_t mat_dim, 
 
 /* DMA - Stripe transfer from L3 to L1. */
 
-fetch_struct l3_to_l1(
+load_struct l3_to_l1(
   __host uint32_t* const ext_src, 
   __device uint32_t* const local_dst, 
   __host uint32_t* const dram_offset,
@@ -103,7 +103,7 @@ fetch_struct l3_to_l1(
   const size_t height,
   const size_t stripe_height)
 {
-  fetch_struct s;
+  load_struct s;
 
   s.clk_0 = hero_get_clk_counter();
 
@@ -229,7 +229,7 @@ int mmult_riscv(
 
     /* Output structs. */
 
-    fetch_struct    fetch;
+    load_struct    fetch;
     compute_struct  comp;
     store_struct    store;
 

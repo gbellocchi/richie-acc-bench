@@ -37,7 +37,7 @@
 #include "inc/eu/hal_eu_eu_v3.h"
 
 /* Include overlay-bench library. */
-#include "../../common/overlay-bench.h"
+#include "../../../common/overlay-bench.h"
 
 // #define RV_DEBUG
 
@@ -107,7 +107,7 @@ void mmult_sw(uint32_t* in1, uint32_t* in2, uint32_t* out_sw, uint32_t mat_dim, 
 
 /* DMA - Stripe transfer from L3 to L1. */
 
-fetch_struct l3_to_l1(
+load_struct l3_to_l1(
   __host uint32_t* const ext_src, 
   __device uint32_t* const local_dst, 
   __host uint32_t* const dram_offset,
@@ -115,7 +115,7 @@ fetch_struct l3_to_l1(
   const size_t height,
   const size_t stripe_height)
 {
-  fetch_struct s;
+  load_struct s;
 
   s.clk_0 = hero_get_clk_counter();
 
@@ -139,12 +139,12 @@ fetch_struct l3_to_l1(
 
 /* DMA - Wait for input tx to conclude before computation. */
 
-fetch_struct wait_for_dma(
+load_struct wait_for_dma(
   hero_dma_job_t dma_in1_towait,
   hero_dma_job_t dma_in2_towait 
 )
 {
-  fetch_struct s;
+  load_struct s;
 
   s.clk_0 = hero_get_clk_counter();
 
@@ -310,7 +310,7 @@ hwpe_progr_struct hwpe_buffer_set(
 
 compute_struct compute()
 {
-  fetch_struct f;
+  load_struct f;
   compute_struct s;
 
   s.clk_0 = hero_get_clk_counter();
@@ -413,10 +413,10 @@ int mmult_hw(
 
     /* Output structs. */
 
-    fetch_struct        fetch;
+    load_struct        fetch;
     hwpe_progr_struct   hw_progr;
     hwpe_progr_struct   hw_buffer_set;
-    fetch_struct        wait_for_in;
+    load_struct        wait_for_in;
     compute_struct      comp;
     store_struct        store;
 
