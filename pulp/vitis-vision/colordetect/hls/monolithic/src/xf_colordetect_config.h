@@ -70,7 +70,7 @@
 #define OUT_TYPE XF_8UC1
 #define PULP_PTR_WIDTH 32
 #define INPUT_PTR_WIDTH 32
-#define OUTPUT_PTR_WIDTH 32
+#define OUTPUT_PTR_WIDTH 8
 
 // Resolve mask shape:
 #if KERNEL_SHAPE == 0
@@ -84,12 +84,15 @@
 #endif
 
 // Streaming interface
-typedef ap_axiu<INPUT_PTR_WIDTH,1,1,1> interface_t;
-typedef hls::stream<interface_t> stream_t;
+typedef ap_axiu<INPUT_PTR_WIDTH,1,1,1> interface_in_t;
+typedef hls::stream<interface_in_t> stream_in_t;
+
+typedef ap_axiu<OUTPUT_PTR_WIDTH,1,1,1> interface_out_t;
+typedef hls::stream<interface_out_t> stream_out_t;
 
 void color_detect(
-    stream_t &img_in, 
-    stream_t &img_out, 
+    stream_in_t &img_in, 
+    stream_out_t &img_out, 
     int rows,
     int cols
 );

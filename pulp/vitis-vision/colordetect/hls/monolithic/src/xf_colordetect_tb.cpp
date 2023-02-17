@@ -124,16 +124,16 @@ int main(int argc, char** argv) {
     colordetect_ref(in_img, ocv_ref, low_thresh, high_thresh);
 
     // IO streams
-    stream_t stream_in("stream_in");
-    stream_t stream_out("stream_out");
+    stream_in_t stream_in("stream_in");
+    stream_out_t stream_out("stream_out");
 
     // Convert Mat to Stream
     cvMat2AXIvideoxf<NPC1>(in_img, stream_in);
 
     // DUT
     color_detect(
-        (stream_t &)stream_in, 
-        (stream_t &)stream_out,
+        (stream_in_t &)stream_in, 
+        (stream_out_t &)stream_out,
         rows, 
         cols
     );
@@ -187,8 +187,8 @@ int main(int argc, char** argv) {
 	}
 
     // Create output header files
-    gen_Hfile("in_img_small", in_img_array, HEIGHT, WIDTH, 32);
-    gen_Hfile("golden_out_img_small", golden_img_array, HEIGHT, WIDTH, 8);
+    gen_Hfile("in_img_small", in_img_array, HEIGHT, WIDTH, INPUT_PTR_WIDTH);
+    gen_Hfile("golden_out_img_small", golden_img_array, HEIGHT, WIDTH, OUTPUT_PTR_WIDTH);
 
     return 0;
 }

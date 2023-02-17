@@ -21,8 +21,8 @@ static constexpr int __XF_DEPTH_OUT = (HEIGHT * WIDTH * (XF_PIXELWIDTH(OUT_TYPE,
 static constexpr int __XF_DEPTH_FILTER = (FILTER_SIZE * FILTER_SIZE);
 
 void color_detect(
-    stream_t &img_in, 
-    stream_t &img_out, 
+    stream_in_t &img_in, 
+    stream_out_t &img_out, 
     int rows,
     int cols
 ) {
