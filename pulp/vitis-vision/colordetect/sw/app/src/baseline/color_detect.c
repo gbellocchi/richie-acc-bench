@@ -26,8 +26,9 @@
 /* Parameters mapping */
 
 void color_detect_wrapper_map_params(
-  color_detect_wrapper_struct *wrapper, 
-  hwpe_l1_ptr_struct *l1_color_detect_buffer, 
+  color_detect_wrapper_struct *wrapper,
+  hwpe_l1_ptr_struct *l1_in_img,  
+  hwpe_l1_ptr_struct *l1_out_img, 
   hwpe_color_detect_workload_params *params) 
 {
   /* Streamer */
@@ -57,45 +58,18 @@ void color_detect_wrapper_map_params(
   wrapper->img_out.addr_gen.step                        = 4;  
 
   // Assign buffer pointers
-  wrapper->img_in.tcdm.ptr = (DEVICE_PTR)l1_color_detect_buffer->ptr; 
-  wrapper->img_out.tcdm.ptr = (DEVICE_PTR)l1_color_detect_buffer->ptr + l1_color_detect_buffer->dim_buffer;
+  wrapper->img_in.tcdm.ptr = (DEVICE_PTR)l1_in_img->ptr; 
+  wrapper->img_out.tcdm.ptr = (DEVICE_PTR)l1_out_img->ptr;
 
   /* Controller */
+
+  // Engine
+  wrapper->ctrl.engine.packet_size_img_in                 = params->cols;
 
   // FSM
   wrapper->ctrl.fsm.n_engine_runs                         = 1;
 
   // Custom registers
-  wrapper->ctrl.custom_regs.rows                          = 128;
-  wrapper->ctrl.custom_regs.cols                          = 128; 
-
-  // wrapper->ctrl.custom_regs.low_thresh_0                  = 22;
-  // wrapper->ctrl.custom_regs.low_thresh_1                  = 150;
-  // wrapper->ctrl.custom_regs.low_thresh_2                  = 60;
-  // wrapper->ctrl.custom_regs.low_thresh_3                  = 38;
-  // wrapper->ctrl.custom_regs.low_thresh_4                  = 150;
-  // wrapper->ctrl.custom_regs.low_thresh_5                  = 60;
-  // wrapper->ctrl.custom_regs.low_thresh_6                  = 160;
-  // wrapper->ctrl.custom_regs.low_thresh_7                  = 150;
-  // wrapper->ctrl.custom_regs.low_thresh_8                  = 60;
-
-  // wrapper->ctrl.custom_regs.high_thresh_0                 = 38;
-  // wrapper->ctrl.custom_regs.high_thresh_1                 = 255;
-  // wrapper->ctrl.custom_regs.high_thresh_2                 = 255;
-  // wrapper->ctrl.custom_regs.high_thresh_3                 = 75;
-  // wrapper->ctrl.custom_regs.high_thresh_4                 = 255;
-  // wrapper->ctrl.custom_regs.high_thresh_5                 = 255;
-  // wrapper->ctrl.custom_regs.high_thresh_6                 = 179;
-  // wrapper->ctrl.custom_regs.high_thresh_7                 = 255;
-  // wrapper->ctrl.custom_regs.high_thresh_8                 = 255;
-
-  // wrapper->ctrl.custom_regs.process_shape_0               = 1;
-  // wrapper->ctrl.custom_regs.process_shape_1               = 1;
-  // wrapper->ctrl.custom_regs.process_shape_2               = 1;
-  // wrapper->ctrl.custom_regs.process_shape_3               = 1;
-  // wrapper->ctrl.custom_regs.process_shape_4               = 1;
-  // wrapper->ctrl.custom_regs.process_shape_5               = 1;
-  // wrapper->ctrl.custom_regs.process_shape_6               = 1;
-  // wrapper->ctrl.custom_regs.process_shape_7               = 1;
-  // wrapper->ctrl.custom_regs.process_shape_8               = 1;
+  wrapper->ctrl.custom_regs.rows                          = params->rows;
+  wrapper->ctrl.custom_regs.cols                          = params->cols; 
 }

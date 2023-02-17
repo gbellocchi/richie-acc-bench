@@ -25,21 +25,18 @@
 /* Struct */
 
 typedef struct {
-  uint32_t n_total_reqs; 
-  uint32_t t_ck_reqs; 
-  uint32_t t_ck_idle;
-  uint32_t max_buffer_dim;
-  uint32_t n_reps;
-  uint32_t n_tcdm_banks;
+  uint32_t rows; 
+  uint32_t cols; 
   hwpe_dataset_params_struct standard;
 } hwpe_color_detect_workload_params;
 
 /* Definitions - Parameters mapping */
 
 void color_detect_wrapper_map_params(
-  color_detect_wrapper_struct *wrapper, 
-  hwpe_l1_ptr_struct *l1_color_detect_buffer, 
-  hwpe_color_detect_workload_params *params);
+  color_detect_wrapper_struct *wrapper,
+  hwpe_l1_ptr_struct *l1_in_img,  
+  hwpe_l1_ptr_struct *l1_out_img, 
+  hwpe_color_detect_workload_params *params) ;
 
 static inline void arov_map_params_color_detect(
   // Accelerator-rich overlay
@@ -47,44 +44,46 @@ static inline void arov_map_params_color_detect(
   // System parameters
   const int cluster_id, 
   const int accelerator_id,
-  // L1 accelerator buffer
-  DEVICE_PTR_CONST l1_arov_acc_buffer,
-  uint32_t dim_color_detect_buffers,
+  // L1 accelerator image buffers
+  DEVICE_PTR_CONST l1_in_img,
+  DEVICE_PTR_CONST l1_out_img,
+  uint32_t dim_img_buffer,
   // Workload paramaters
-  uint32_t width, 
-  uint32_t height, 
-  uint32_t stripe_height,
-  uint32_t n_total_reqs, 
-  uint32_t t_ck_reqs, 
-  uint32_t t_ck_idle, 
-  uint32_t max_buffer_dim,
-  uint32_t n_reps,
-  uint32_t n_tcdm_banks) { 
+  uint32_t rows, 
+  uint32_t cols
+  ) { 
 
   /* Define parameters */
 
   hwpe_color_detect_workload_params params;
 
-  params.n_total_reqs     = n_total_reqs; 
-  params.t_ck_reqs        = t_ck_reqs; 
-  params.t_ck_idle        = t_ck_idle;
-  params.max_buffer_dim   = max_buffer_dim;
-  params.n_reps           = n_reps;
-  params.n_tcdm_banks     = n_tcdm_banks;
+  params.rows = rows; 
+  params.cols = cols; 
 
-  /* L1 buffer pointer */
+  /* L1 buffers */
 
-  hwpe_l1_ptr_struct l1_color_detect_buffer;
+  // Input image
+  hwpe_l1_ptr_struct _l1_in_img;
 
-  l1_color_detect_buffer.ptr = (DEVICE_PTR_CONST)l1_arov_acc_buffer + dim_color_detect_buffers * accelerator_id;
-  l1_color_detect_buffer.dim_buffer = dim_color_detect_buffers;
+  _l1_in_img.ptr = (DEVICE_PTR_CONST)l1_in_img;
+  _l1_in_img.dim_buffer = dim_img_buffer;
+
+  // Output image
+  hwpe_l1_ptr_struct _l1_out_img;
+
+  _l1_out_img.ptr = (DEVICE_PTR_CONST)l1_out_img;
+  _l1_out_img.dim_buffer = dim_img_buffer;
+
+  // [TO-DO] ...Then also intermediate result buffers are to be declared 
+
+  // ...
 
   /* Decide which hardware accelerator to program */
 
   if(cluster_id == 0){
     switch (accelerator_id){
 
-      case 0: color_detect_wrapper_map_params(&(arov->color_detect_0_0), &l1_color_detect_buffer, &params); break;
+      case 0: color_detect_wrapper_map_params(&(arov->color_detect_0_0), &_l1_in_img, &_l1_out_img, &params); break;
       default: printf("Error: No matching case for <arov_map_params_color_detect>\n"); break;
     }
   }
