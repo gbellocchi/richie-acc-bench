@@ -30,9 +30,6 @@ int print_job_stats(
   const int job_id, 
   const char *component_name,
   // Runtime parameters
-  int n_hwpe_active,
-  int dma_payload_dim,
-  int l1_buffer_dim,
   int n_reps,
   int n_total_reqs,
   // Cache

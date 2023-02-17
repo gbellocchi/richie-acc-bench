@@ -27,7 +27,6 @@ void run_l2_experiment(const int cluster_id, const int core_id) {
   /* Define cache stats */
 
   int hit[2], trns[2], miss[2];
-
   int reg_hit, reg_trns, reg_miss;
 
   /* Cycle counters */
@@ -54,11 +53,15 @@ void run_l2_experiment(const int cluster_id, const int core_id) {
                                     // same as the HW of the SoC bus 
 
   // Declare L2 cluster buffer address  
-  DEVICE_PTR_CONST l2_cl_addr             = l2_cl_base + (cluster_id - (l2_cl_port_id - l2_cl_port_id_offset) * l2_n_cl_per_port) * dma_payload_dim_stop;
+  DEVICE_PTR_CONST l2_cl_addr             = l2_cl_base + (cluster_id - (l2_cl_port_id - l2_cl_port_id_offset) * l2_n_cl_per_port) * dma_payload_dim;
 
-  // Declare read buffer address 
-  DEVICE_PTR_CONST l2_r_reqs_data         = l2_cl_addr;
-  // DEVICE_PTR_CONST l2_w_reqs_data         = l2_cl_addr + l1_buffer_dim_stop;
+  // Declare L2 image buffers
+  DEVICE_PTR_CONST l2_in_img              = l2_cl_addr;
+  DEVICE_PTR_CONST l2_out_img             = l2_in_img + l2_buffer_dim;
+
+  // [TO-DO] ...Then also intermediate result buffers are to be declared 
+
+  // ...
 
   #if defined(PRINT_LOG)
     printf(" # - [Params] ID_L2_port:             %d \n",           (int32_t)l2_cl_port_id);
@@ -67,14 +70,11 @@ void run_l2_experiment(const int cluster_id, const int core_id) {
   #endif
 
   #ifdef INPUT_INIT
-
-    for(int i=0; i<l1_buffer_dim_stop; i++){
-      pulp_write32(l2_r_reqs_data+i*sizeof(int32_t), in_img_small[i]);
-      // pulp_write32(l2_w_reqs_data+i*sizeof(int32_t), 0);
-
-      // 128x128_golden_out_img
-    }
+    // Initialize input buffer with input image
+    for(int i=0; i<l1_buffer_dim; i++) pulp_write32(l2_in_img+i*sizeof(int32_t), in_img_small[i]);
   #endif
+
+  /* ===================================================================== */
 
   /* Initialize L1 memory */
 
@@ -84,69 +84,72 @@ void run_l2_experiment(const int cluster_id, const int core_id) {
     DEVICE_PTR_CONST l1_arov_buffer    = arov_l1_heap(cluster_id) + n_l1_ports * sizeof(uint32_t);
   #endif
 
+  // Declare L1 image buffers
+  DEVICE_PTR_CONST l1_in_img              = l1_arov_buffer;
+  DEVICE_PTR_CONST l1_out_img             = l1_in_img + l1_buffer_dim;
+
+  // [TO-DO] ...Then also intermediate result buffers are to be declared 
+
+  // ...
+
+  /* ===================================================================== */
+
   /* System */
 
-  pulp_dma_struct dma_in[n_hwpe_stop], dma_out[n_hwpe_stop], dma_wait[n_hwpe_stop];
+  pulp_dma_struct dma_in[n_hwpe_active], dma_out[n_hwpe_active], dma_wait[n_hwpe_active];
 
   /* Accelerators */
 
-  uint32_t n_total_reqs, t_ck_reqs, t_ck_idle;
-  
-  int offload_id[n_hwpe_stop];
+  // Custom registers
+  unsigned rows, cols;
+
+  int offload_id[n_hwpe_active];
 
   /* Allocate accelerator-rich overlay */
 
   arov_struct arov;
+
+  /* ===================================================================== */
 
   /* Cluster steady state condition */
   
   cluster_barrier_eu_soc_evt(cluster_id, experiment_id);
   if(!cluster_id) cluster_slv_restart_eu_soc_evt(cluster_id, experiment_id);
 
+  /* ===================================================================== */
+
   /* Design space exploration */
 
-  int n_hwpe_active     = n_hwpe_total;
-  int l1_buffer_dim     = l1_buffer_dim_stop;
-  int dma_payload_dim   = dma_payload_dim_stop;
-
-  for(int n_reps=n_reps_start; n_reps<=n_reps_stop; n_reps+=n_reps){
+  for(int n_reps_img=n_reps_img_start; n_reps_img<=n_reps_img_stop; n_reps_img+=n_reps_img){
 
     /* Runtime experiment parameters */
 
-    // - Request time (burst length)
-    t_ck_reqs                      = 1; 
+    // - Number of image rows
+    rows = l2_img_rows; 
 
-    // - Idle time
-    t_ck_idle                      = 0;  
-
-    // - Overall number of requests
-    n_total_reqs                   = l1_buffer_dim * n_reps;
+    // - Number of image columns
+    cols = l2_img_cols;  
 
     /* Program accelerators */
 
     for(int acc_id=0; acc_id<n_hwpe_active; acc_id++){
 
+      // Initialization
       arov_init(&arov, cluster_id, acc_id);
       
       arov_map_params_color_detect(
-        &arov, 
-        cluster_id, 
-        acc_id,
-        l1_arov_buffer,
-        l1_color_detect_buffer_dim,
-        l1_buffer_dim, 
-        1, 
-        1,
-        n_total_reqs, 
-        t_ck_reqs, 
-        t_ck_idle, 
-        l1_buffer_dim,
-        n_reps,
-        n_l1_ports);
+        // Platform
+        &arov, cluster_id, acc_id,
+        // L1 image buffers
+        l1_in_img, l1_out_img, l1_buffer_dim,
+        // Accelerator parameters
+        rows, cols
+      );
 
+      // Activation and programming
       offload_id[acc_id] = arov_activate(&arov, cluster_id, acc_id);
-
       arov_program(&arov, cluster_id, acc_id);
+
     }
 
     /* Flush cache (cold-cache condition) */
@@ -199,16 +202,17 @@ void run_l2_experiment(const int cluster_id, const int core_id) {
 
       /* ===================================================================== */
 
-      /* ==================== */
-      /*  Profiling - DMA in  */
-      /* ==================== */
+      /* ============================= */
+      /*  Profiling - DMA input image  */
+      /* ============================= */
 
       /* Start by issuing data transfers to L1 for each accelerator */
 
       for(int acc_id=0; acc_id<n_hwpe_active; acc_id++){
 
-        DEVICE_PTR l1_addr = l1_arov_buffer; // (DEVICE_PTR)(arov_get_dev_r_reqs_addr(&arov, cluster_id, acc_id));
-        DEVICE_PTR l2_addr = l2_r_reqs_data;
+        // Input image
+        DEVICE_PTR l1_addr = l1_in_img;
+        DEVICE_PTR l2_addr = l2_in_img;
 
         for (int i = 0; i < n_dma_tx; i++) {
           dma_in[acc_id].job = hero_memcpy_host2dev_async(l1_addr, l2_addr, dma_payload_dim * sizeof(uint32_t));
@@ -226,8 +230,8 @@ void run_l2_experiment(const int cluster_id, const int core_id) {
 
       for(int acc_id=0; acc_id<n_hwpe_active; acc_id++){
         hero_dma_wait(dma_in[acc_id].job);
-        // if (l1_buffer_dim>0) arov_compute(&arov, cluster_id, acc_id);
-        if (l1_buffer_dim>0) pulp_write32(0x1b202000 + acc_id * 0x200, 0);
+        if (l1_buffer_dim>0) arov_compute(&arov, cluster_id, acc_id);
+        // if (l1_buffer_dim>0) pulp_write32(0x1b202000 + acc_id * 0x200, 0);
       }
 
       /* Wait for computation to terminate, then issue data transfers to L2 */
@@ -238,97 +242,96 @@ void run_l2_experiment(const int cluster_id, const int core_id) {
           while(!arov_is_finished(&arov, cluster_id, acc_id)){
             arov_wait_eu(&arov, cluster_id, acc_id);
           }
-          // arov_wait_polling(&arov, cluster_id, acc_id);
         }
 
-        DEVICE_PTR l1_addr = l1_arov_buffer; // (DEVICE_PTR)(arov_get_dev_w_reqs_addr(&arov, cluster_id, acc_id));
-        DEVICE_PTR l2_addr = l2_r_reqs_data;
+        // DEVICE_PTR l1_addr = l1_arov_buffer; // (DEVICE_PTR)(arov_get_dev_w_reqs_addr(&arov, cluster_id, acc_id));
+        // DEVICE_PTR l2_addr = l2_in_img;
 
-        for (int i = 0; i < n_dma_tx; i++) {
-          // dma_out[acc_id].job = hero_memcpy_dev2host_async(l2_addr, l1_addr, dma_payload_dim * sizeof(uint32_t));
-          dma_out[acc_id].job = hero_memcpy_dev2host_async_no_trigger(l2_addr, l1_addr, dma_payload_dim * sizeof(uint32_t));
-        }
+        // for (int i = 0; i < n_dma_tx; i++) {
+        //   // dma_out[acc_id].job = hero_memcpy_dev2host_async(l2_addr, l1_addr, dma_payload_dim * sizeof(uint32_t));
+        //   dma_out[acc_id].job = hero_memcpy_dev2host_async_no_trigger(l2_addr, l1_addr, dma_payload_dim * sizeof(uint32_t));
+        // }
 
       }
 
-      /* ===================================================================== */
+  //     /* ===================================================================== */
 
-      /* ===================== */
-      /*  Profiling - DMA out  */
-      /* ===================== */
+      // /* ============================== */
+      // /*  Profiling - DMA output image  */
+      // /* ============================== */
 
-      /* Wait DMA to terminate data transfer */
+  //     /* Wait DMA to terminate data transfer */
 
-      // for(int acc_id=0; acc_id<n_hwpe_active; acc_id++){
-      //   hero_dma_wait(dma_out[acc_id].job);
-      // }
+  //     // for(int acc_id=0; acc_id<n_hwpe_active; acc_id++){
+  //     //   hero_dma_wait(dma_out[acc_id].job);
+  //     // }
 
-      /* ===================================================================== */
+  //     /* ===================================================================== */
 
-      /* MEASUREMENT - END */
+  //     /* MEASUREMENT - END */
 
-      // Cluster synchronization barrier
-      cluster_barrier_eu_soc_evt(cluster_id, experiment_id);
+  //     // Cluster synchronization barrier
+  //     cluster_barrier_eu_soc_evt(cluster_id, experiment_id);
 
-      // Cluster timer
-      if(!cluster_id) t_experiment_sys_pov.cnt_1 = hero_get_clk_counter();
+  //     // Cluster timer
+  //     if(!cluster_id) t_experiment_sys_pov.cnt_1 = hero_get_clk_counter();
 
-      // Cache statistics and performance counters
-      stop_measurement(cluster_id, core_id, hit, trns, miss);
+  //     // Cache statistics and performance counters
+  //     stop_measurement(cluster_id, core_id, hit, trns, miss);
 
-      // Update measured cache stats
-      reg_hit  += hit[1] - hit[0];
-      reg_trns += trns[1] - trns[0];
-      reg_miss += miss[1] - miss[0];
+  //     // Update measured cache stats
+  //     reg_hit  += hit[1] - hit[0];
+  //     reg_trns += trns[1] - trns[0];
+  //     reg_miss += miss[1] - miss[0];
 
-      /* ===================================================================== */
+  //     /* ===================================================================== */
 
-      /* Print statistics */
+  //     /* Print statistics */
 
-      print_job_stats(
-        // System
-        cluster_id, 
-        core_id, 
-        // Experiment
-        experiment_id, 
-        job_id, 
-        "L2", 
-        // Runtime parameters
-        n_hwpe_active, 
-        dma_payload_dim, 
-        l1_buffer_dim, 
-        n_reps,
-        n_total_reqs,
-        // Cache
-        &reg_hit,
-        &reg_trns, 
-        &reg_miss, 
-        // Clock counters
-        0xFFFFFFFF,
-        &t_experiment_sys_pov
-      );
+  //     print_job_stats(
+  //       // System
+  //       cluster_id, 
+  //       core_id, 
+  //       // Experiment
+  //       experiment_id, 
+  //       job_id, 
+  //       "L2", 
+  //       // Runtime parameters
+  //       n_hwpe_active, 
+  //       dma_payload_dim, 
+  //       l1_buffer_dim, 
+  //       n_reps_img,
+  //       n_total_reqs,
+  //       // Cache
+  //       &reg_hit,
+  //       &reg_trns, 
+  //       &reg_miss, 
+  //       // Clock counters
+  //       0xFFFFFFFF,
+  //       &t_experiment_sys_pov
+  //     );
 
-      /* Restart clusters */
+  //     /* Restart clusters */
 
-      if(!cluster_id) cluster_slv_restart_eu_soc_evt(cluster_id, experiment_id);
+  //     if(!cluster_id) cluster_slv_restart_eu_soc_evt(cluster_id, experiment_id);
 
     } // job_id
 
-    /* Cleaning accelerators */
+  //   /* Cleaning accelerators */
 
-    for(int acc_id=0; acc_id<n_hwpe_active; acc_id++){
-      arov_free(&arov, cluster_id, acc_id);
-    }
+  //   for(int acc_id=0; acc_id<n_hwpe_active; acc_id++){
+  //     arov_free(&arov, cluster_id, acc_id);
+  //   }
 
-    /* Cleaning L1 and L2 */
+  //   /* Cleaning L1 and L2 */
     
-    #if defined(_pulp_rt_)
-      hero_l3free(l2_r_reqs_data);
-      hero_l3free(l2_w_reqs_data);
-      hero_l1free(l1_arov_buffer);
-    #endif
+  //   #if defined(_pulp_rt_)
+  //     hero_l3free(l2_in_img);
+  //     hero_l3free(l2_w_reqs_data);
+  //     hero_l1free(l1_arov_buffer);
+  //   #endif
   
     experiment_id++;
 
-  } // n_reps
+  } // n_reps_img
 }
