@@ -20,18 +20,19 @@ static constexpr int __XF_DEPTH = (HEIGHT * WIDTH * (XF_PIXELWIDTH(IN_TYPE, NPC1
 static constexpr int __XF_DEPTH_OUT = (HEIGHT * WIDTH * (XF_PIXELWIDTH(OUT_TYPE, NPC1)) / 8) / (OUTPUT_PTR_WIDTH / 8);
 static constexpr int __XF_DEPTH_FILTER = (FILTER_SIZE * FILTER_SIZE);
 
-void color_detect(
+void color_detect_f0(
     stream_in_t &img_in, 
-    stream_in_t &img_out, 
+    stream_out_t &img_out, 
     int rows,
     int cols
 ) {
 
     #pragma HLS INTERFACE axis register both port=img_in depth=__XF_DEPTH
-    #pragma HLS INTERFACE axis register both port=img_out depth=__XF_DEPTH
+    #pragma HLS INTERFACE axis register both port=img_out depth=__XF_DEPTH_OUT
 
     xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1> imgInput(rows, cols);
     xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1> rgb2hsv(rows, cols);
+    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1> imgHelper1(rows, cols);
 
     // local parameters
     unsigned char low_thresh[FILTER_SIZE*FILTER_SIZE];
@@ -80,8 +81,11 @@ void color_detect(
     // Convert RGBA to HSV:
     xf::cv::bgr2hsv<IN_TYPE, HEIGHT, WIDTH, NPC1>(imgInput, rgb2hsv);
 
+    // Do the color thresholding:
+    xf::cv::colorthresholding<IN_TYPE, OUT_TYPE, MAXCOLORS, HEIGHT, WIDTH, NPC1>(rgb2hsv, imgHelper1, low_thresh, high_thresh);
+
     // Convert _dst xf::cv::Mat object to output array:
-    xf::cv::xfMat2AXIvideo<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1>(rgb2hsv, img_out);
+    xf::cv::xfMat2AXIvideo<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(imgHelper1, img_out);
 
     return;
 

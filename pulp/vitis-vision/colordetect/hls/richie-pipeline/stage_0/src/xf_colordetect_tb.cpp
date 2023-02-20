@@ -20,7 +20,7 @@
 #include <gen_Hfile.h> // to generate header files for stimuli, golden data, etc.
 
 // OpenCV reference function:
-void colordetect_ref(cv::Mat& _src, cv::Mat& _dst, unsigned char* nLowThresh, unsigned char* nHighThresh) {
+void colordetect_pipeline_ref(cv::Mat& _src, cv::Mat& _dst, unsigned char* nLowThresh, unsigned char* nHighThresh) {
     // Temporary matrices for processing
     cv::Mat mask1, mask2, mask3, _imgrange, _imghsv;
 
@@ -28,7 +28,7 @@ void colordetect_ref(cv::Mat& _src, cv::Mat& _dst, unsigned char* nLowThresh, un
 
     // Convert the input to the HSV colorspace. Using BGR here since it is the default of OpenCV.
     // Using RGB yields different results, requiring a change of the threshold ranges
-    cv::cvtColor(_src, _imghsv, cv::COLOR_BGR2HSV);
+    cv::cvtColor(_src, _imghsv, cv::COLOR_BGR2HSV, 0);
     cv::imwrite("b_img_bgr2hsv.png", _imghsv);
 
     // Get the color of Yellow from the HSV image and store it as a mask
@@ -47,18 +47,7 @@ void colordetect_ref(cv::Mat& _src, cv::Mat& _dst, unsigned char* nLowThresh, un
     _imgrange = mask1 | mask2 | mask3;
     cv::imwrite("c_img_threshold.png", _imgrange);
 
-    cv::Mat element = cv::getStructuringElement(0, cv::Size(3, 3), cv::Point(-1, -1));
-    cv::erode(_imgrange, _dst, element, cv::Point(-1, -1), 1, cv::BORDER_CONSTANT);
-    cv::imwrite("d_img_erode.png", _dst);
-
-    cv::dilate(_dst, _dst, element, cv::Point(-1, -1), 1, cv::BORDER_CONSTANT);
-    cv::imwrite("e_img_dilate.png", _dst);
-
-    cv::dilate(_dst, _dst, element, cv::Point(-1, -1), 1, cv::BORDER_CONSTANT);
-    cv::imwrite("f_img_dilate.png", _dst);
-
-    cv::erode(_dst, _dst, element, cv::Point(-1, -1), 1, cv::BORDER_CONSTANT);
-    cv::imwrite("g_img_erode.png", _dst);
+    _dst = _imgrange;
 }
 
 int main(int argc, char** argv) {
@@ -127,40 +116,34 @@ int main(int argc, char** argv) {
 
     std::cout << "INFO: Thresholds loaded." << std::endl;
 
-    // Reference function:
-    colordetect_ref(in_img, ocv_ref, low_thresh, high_thresh);
+    // Reference function
+    colordetect_pipeline_ref(in_img, ocv_ref, low_thresh, high_thresh);
 
     // IO streams
     stream_in_t stream_in("stream_in");
-    stream_in_t stream_out("stream_out");
+    stream_out_t stream_out("stream_out");
 
     // Convert Mat to Stream
     cvMat2AXIvideoxf<NPC1>(in_img, stream_in);
 
     // DUT
-    color_detect(
+    color_detect_f0(
         (stream_in_t &)stream_in, 
-        (stream_in_t &)stream_out,
+        (stream_out_t &)stream_out,
         rows, 
         cols
     );
 
     // Convert Stream to Mat
-    AXIvideo2cvMatxf<NPC1, INPUT_PTR_WIDTH>(stream_out, out_img);
+    AXIvideo2cvMatxf<NPC1, OUTPUT_PTR_WIDTH>(stream_out, out_img);
 
-    // Open partial pipeline result:
-    out_pipeline_ref = cv::imread("b_img_bgr2hsv.png", 1);
-    if (!out_pipeline_ref.data) {
-        fprintf(stderr, "ERROR: Could not open the input image.\n ");
-        return -1;
-    }
-
-    // Results verification:
+    // Results verification
     int cnt = 0;
-    cv::absdiff(out_pipeline_ref, in_img, diff);
+
+    cv::absdiff(ocv_ref, out_img, diff);
 
     for (int i = 0; i < diff.rows; ++i) {
-        for (int j = 0; j < diff.cols; ++j) {
+        for (int j = 0; j < diff.cols; ++j) {   
             uchar v = diff.at<uchar>(i, j);
             if (v > 0) cnt++;
         }
@@ -177,11 +160,6 @@ int main(int argc, char** argv) {
     }
 
     // ------------------------------------------------------------------ //
-
-    // Write down images
-    cv::imwrite("golden_out_img.png", ocv_ref);
-    cv::imwrite("output.png", out_img);
-    cv::imwrite("diff.png", diff);
 
     // Convert input Mat img to array
     char* in_img_array = (char*)malloc(HEIGHT*WIDTH*sizeof(char));
