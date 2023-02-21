@@ -21,7 +21,7 @@
 
 // System architecture
 #define n_clusters                          1
-#define n_hwpe_total                        1
+#define n_hwpe_total                        4
 
 // Event unit
 #define max_num_sw_evt                      8
@@ -58,6 +58,10 @@
 #define l1_n_img_tiles                      1
 #define l1_buffer_dim                       l2_buffer_dim/l1_n_img_tiles
 
+// - L2/L1 optimizations
+// #define l2_double_buffering
+// #define l1_double_buffering
+
 // - DMA number of transfers (for one outer transfer)
 #define n_dma_tx                            1
 
@@ -79,47 +83,13 @@
 
 /* Profiling types */
 
-#define _profile_l2_
+#define _profile_1cl_small_
 
 /* Monitored components */
 
 // #define _profile_dma_in_
 // #define _profile_compute_
 // #define _profile_dma_out_
-
-/* ===================================================================== */
-
-/* ========================== */
-/*  L1 application profiling  */
-/* ========================== */
-
-/* Profiling types */
-
-// #define _profile_l1_
-
-/* ===================================================================== */
-
-/* =============== */
-/*  API profiling  */
-/* =============== */
-
-/* Profiling types */
-
-// #define _profile_api_
-
-/* Monitored components */
-
-// #define _profile_arov_init_
-// #define _profile_arov_map_params_color_detect_
-// #define _profile_arov_activate_
-// #define _profile_arov_program_
-// #define _profile_arov_compute_
-// #define _profile_arov_free_
-// #define _profile_hero_memcpy_host2dev_async_
-// #define _profile_hero_l3malloc_
-// #define _profile_hero_l1malloc_
-// #define _profile_hero_l3free_
-// #define _profile_hero_l1free_
 
 /* ===================================================================== */
 

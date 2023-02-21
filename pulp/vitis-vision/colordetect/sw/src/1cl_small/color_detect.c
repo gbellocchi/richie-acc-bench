@@ -25,8 +25,8 @@
 
 /* Parameters mapping */
 
-void color_detect_wrapper_map_params(
-  color_detect_wrapper_struct *wrapper,
+void color_detect_pipeline_map_params(
+  rgb2hsv_cv_wrapper_struct *wrapper,
   hwpe_l1_ptr_struct *l1_in_img,  
   hwpe_l1_ptr_struct *l1_out_img, 
   hwpe_color_detect_workload_params *params) 

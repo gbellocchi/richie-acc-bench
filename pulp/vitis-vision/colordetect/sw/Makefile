@@ -7,7 +7,7 @@ EXPERIMENT_PATH	 	:= $(ROOT)/functions
 dirs 				= $(shell find $(SRC_PATH) -type d) $(EXPERIMENT_PATH)
 
 # Targets
-SRC_TARGET 			?= baseline
+SRC_TARGET 			?= 1cl_small
 EXE_PATH 			?= $(SRC_TARGET)
 EXE_NAME 			?= $(SRC_TARGET)
 

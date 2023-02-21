@@ -32,8 +32,8 @@ typedef struct {
 
 /* Definitions - Parameters mapping */
 
-void color_detect_wrapper_map_params(
-  color_detect_wrapper_struct *wrapper,
+void color_detect_pipeline_map_params(
+  rgb2hsv_cv_wrapper_struct *wrapper,
   hwpe_l1_ptr_struct *l1_in_img,  
   hwpe_l1_ptr_struct *l1_out_img, 
   hwpe_color_detect_workload_params *params) ;
@@ -74,16 +74,15 @@ static inline void arov_map_params_color_detect(
   _l1_out_img.ptr = (DEVICE_PTR_CONST)l1_out_img;
   _l1_out_img.dim_buffer = dim_img_buffer;
 
-  // [TO-DO] ...Then also intermediate result buffers are to be declared 
-
-  // ...
-
   /* Decide which hardware accelerator to program */
 
   if(cluster_id == 0){
     switch (accelerator_id){
 
-      case 0: color_detect_wrapper_map_params(&(arov->color_detect_0_0), &_l1_in_img, &_l1_out_img, &params); break;
+      case 0: color_detect_pipeline_map_params(&(arov->rgb2hsv_cv_0_0), &_l1_in_img, &_l1_out_img, &params); break;
+      case 1: color_detect_pipeline_map_params(&(arov->threshold_cv_0_1), &_l1_in_img, &_l1_out_img, &params); break;
+      case 2: color_detect_pipeline_map_params(&(arov->erode_cv_0_2), &_l1_in_img, &_l1_out_img, &params); break;
+      case 3: color_detect_pipeline_map_params(&(arov->dilate_cv_0_3), &_l1_in_img, &_l1_out_img, &params); break;
       default: printf("Error: No matching case for <arov_map_params_color_detect>\n"); break;
     }
   }

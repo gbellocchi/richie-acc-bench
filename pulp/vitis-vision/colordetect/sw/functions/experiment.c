@@ -18,7 +18,7 @@
 
 #include <stimuli.h>
 
-void run_l2_experiment(const int cluster_id, const int core_id) {
+void run_1cl_small(const int cluster_id, const int core_id) {
 
   /* ===================================================================== */
 
@@ -137,14 +137,14 @@ void run_l2_experiment(const int cluster_id, const int core_id) {
       // Initialization
       arov_init(&arov, cluster_id, acc_id);
       
-      arov_map_params_color_detect(
-        // Platform
-        &arov, cluster_id, acc_id,
-        // L1 image buffers
-        l1_in_img, l1_out_img, l1_buffer_dim,
-        // Accelerator parameters
-        rows, cols
-      );
+      // -- rgb2hsv - Map parameters
+      if (cluster_id==0 && acc_id==0) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_in_img, l1_out_img, l1_buffer_dim, rows, cols);
+      // -- threshold - Map parameters
+      if (cluster_id==0 && acc_id==1) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_in_img, l1_out_img, l1_buffer_dim, rows, cols);
+      // -- erode - Map parameters
+      if (cluster_id==0 && acc_id==2) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_in_img, l1_out_img, l1_buffer_dim, rows, cols);
+      // -- dilate - Map parameters
+      if (cluster_id==0 && acc_id==3) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_in_img, l1_out_img, l1_buffer_dim, rows, cols);
 
       // Activation and programming
       offload_id[acc_id] = arov_activate(&arov, cluster_id, acc_id);

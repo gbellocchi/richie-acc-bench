@@ -84,7 +84,6 @@ int print_job_stats(
 
     // Runtime parameters
 
-    #if defined(_profile_l2_)
       printf(" # - [Params] N_clusters:             %d \n",           (int32_t)n_clusters);
       printf(" # - [Params] N_acc:                  %d \n",           (int32_t)n_hwpe_active);
       printf(" # - [Params] N_reps:                 %d \n",           (int32_t)n_reps);
@@ -93,13 +92,6 @@ int print_job_stats(
       printf(" # - [Params] DIM_burst:              %d \n",           (int32_t)n_total_reqs);
       printf(" # - [Params] N_l1_banks:             %d \n",           (int32_t)n_l1_ports);
       printf(" # - [Params] N_L2_ports:             %d \n",           (int32_t)n_l2_ports_phy);
-    #endif
-
-    #if defined(_profile_api_)
-      printf(" # - [Params] n_hwpe_active:          %d\n",            (int32_t)n_hwpe_active);
-      printf(" # - [Params] dma_payload_dim:        %d\n",            (int32_t)dma_payload_dim);
-      printf(" # - [Params] l1_buffer_dim:          %d\n",            (int32_t)l1_buffer_dim);
-    #endif
 
     printf(" #\n");
 
@@ -299,12 +291,9 @@ int profiling(const int cluster_id, const int core_id)
   }
 
   /* Launch profiling */
-
-  #if defined(_profile_l2_)
-    run_l2_experiment(cluster_id, core_id);
-  #endif
-  #if defined(_profile_api_)
-    run_api_experiment(cluster_id, core_id);
+  
+  #if defined(_profile_1cl_small_)
+    run_1cl_small(cluster_id, core_id);
   #endif
 
   if(cluster_id==0 && core_id==0){
