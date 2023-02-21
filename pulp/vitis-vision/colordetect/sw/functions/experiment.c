@@ -162,220 +162,228 @@ void run_1cl_small(const int cluster_id, const int core_id) {
 
   /* ===================================================================== */
 
-  /* Design space exploration */
+  /* Runtime experiment parameters */
 
-  for(int n_reps_img=n_reps_img_start; n_reps_img<=n_reps_img_stop; n_reps_img+=n_reps_img){
+  // - Number of image rows
+  rows = l2_img_rows; 
 
-    /* Runtime experiment parameters */
+  // - Number of image columns
+  cols = l2_img_cols;  
 
-    // - Number of image rows
-    rows = l2_img_rows; 
+  /* Program accelerators */
 
-    // - Number of image columns
-    cols = l2_img_cols;  
+  for(int acc_id=0; acc_id<n_hwpe_active; acc_id++){
 
-    /* Program accelerators */
+    // Initialization
+    arov_init(&arov, cluster_id, acc_id);
+    
+    // -- rgb2hsv - Map parameters
+    if (cluster_id==0 && acc_id==0) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_img_a, l1_img_b, l1_buffer_dim, rows, cols);
+    // -- threshold - Map parameters
+    if (cluster_id==0 && acc_id==1) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_img_b, l1_img_c, l1_buffer_dim, rows, cols);
+    // -- erode - Map parameters
+    if (cluster_id==0 && acc_id==2) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_img_c, l1_img_d, l1_buffer_dim, rows, cols);
+    // -- dilate - Map parameters
+    if (cluster_id==0 && acc_id==3) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_img_d, l1_img_e, l1_buffer_dim, rows, cols);
 
-    for(int acc_id=0; acc_id<n_hwpe_active; acc_id++){
+    // Activation and programming
+    offload_id[acc_id] = arov_activate(&arov, cluster_id, acc_id);
+    arov_program(&arov, cluster_id, acc_id);
 
-      // Initialization
-      arov_init(&arov, cluster_id, acc_id);
-      
-      // -- rgb2hsv - Map parameters
-      if (cluster_id==0 && acc_id==0) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_in_img, l1_out_img, l1_buffer_dim, rows, cols);
-      // -- threshold - Map parameters
-      if (cluster_id==0 && acc_id==1) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_in_img, l1_out_img, l1_buffer_dim, rows, cols);
-      // -- erode - Map parameters
-      if (cluster_id==0 && acc_id==2) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_in_img, l1_out_img, l1_buffer_dim, rows, cols);
-      // -- dilate - Map parameters
-      if (cluster_id==0 && acc_id==3) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_in_img, l1_out_img, l1_buffer_dim, rows, cols);
+  }
 
-      // Activation and programming
-      offload_id[acc_id] = arov_activate(&arov, cluster_id, acc_id);
-      arov_program(&arov, cluster_id, acc_id);
+  /* Flush cache (cold-cache condition) */
+
+  icache_flush_all();
+
+  /* Launch profiling jobs */
+
+  for(int job_id=0; job_id<exp_len_job_queue; job_id++){
+
+    /* ===================================================================== */
+
+    /* Reset and start PULP counter */
+
+    hero_reset_clk_counter();
+    hero_start_clk_counter();
+
+    /* Reset cache stats */
+
+    if(cluster_id==0 && core_id==0){
+
+      icache_stats_reset();
+
+      reg_hit   = 0;
+      reg_trns  = 0;
+      reg_miss  = 0;
+
+      /* Reset performance counters */
+
+      hero_perf_reset_all();
 
     }
 
-    /* Flush cache (cold-cache condition) */
+    /* ===================================================================== */
 
-    icache_flush_all();
+    /* MEASUREMENT - START */
 
-    /* Launch profiling jobs */
+    // cache statistics and performance counters
+    start_measurement(cluster_id, core_id, hit, trns, miss);
 
-    for(int job_id=0; job_id<exp_len_job_queue; job_id++){
+    // Cluster synchronization barrier
+    cluster_barrier_eu_soc_evt(cluster_id, experiment_id);
 
-      /* ===================================================================== */
+    // Cluster timer
+    if(!cluster_id) t_experiment_sys_pov.cnt_0 = hero_get_clk_counter();
 
-      /* Reset and start PULP counter */
+    // Activate clusters simultaneously
+    // NB: Activation must be after the starting of time measurements
+    if(!cluster_id) cluster_slv_restart_eu_soc_evt(cluster_id, experiment_id);
 
-      hero_reset_clk_counter();
-      hero_start_clk_counter();
+    /* ===================================================================== */
 
-      /* Reset cache stats */
+    /* ============================= */
+    /*  Profiling - Color detection  */
+    /* ============================= */
 
-      if(cluster_id==0 && core_id==0){
+    /* Transfer input image from L2 */
 
-        icache_stats_reset();
+    for (int i = 0; i < n_dma_tx; i++) {
+      dma_in[RGB2HSV_CV].job = hero_memcpy_host2dev_async(l1_img_a, l2_img_a, dma_payload_dim * sizeof(uint32_t));
+    }
 
-        reg_hit   = 0;
-        reg_trns  = 0;
-        reg_miss  = 0;
+    /* Wait DMA to terminate data transfer */
 
-        /* Reset performance counters */
+    hero_dma_wait(dma_in[RGB2HSV_CV].job);
 
-        hero_perf_reset_all();
+    /* Pipeline */
 
-      }
+    // RGB2HSV_CV
 
-      /* ===================================================================== */
+    arov_compute(&arov, cluster_id, RGB2HSV_CV);
 
-      /* MEASUREMENT - START */
+    while(!arov_is_finished(&arov, cluster_id, RGB2HSV_CV)){
+      arov_wait_eu(&arov, cluster_id, RGB2HSV_CV);
+    }
 
-      // cache statistics and performance counters
-      start_measurement(cluster_id, core_id, hit, trns, miss);
-
-      // Cluster synchronization barrier
-      cluster_barrier_eu_soc_evt(cluster_id, experiment_id);
-
-      // Cluster timer
-      if(!cluster_id) t_experiment_sys_pov.cnt_0 = hero_get_clk_counter();
-
-      // Activate clusters simultaneously
-      // NB: Activation must be after the starting of time measurements
-      if(!cluster_id) cluster_slv_restart_eu_soc_evt(cluster_id, experiment_id);
-
-      /* ===================================================================== */
-
-      /* ============================= */
-      /*  Profiling - DMA input image  */
-      /* ============================= */
-
-      /* Start by issuing data transfers to L1 for each accelerator */
-
-      for(int acc_id=0; acc_id<n_hwpe_active; acc_id++){
-
-        // Input image
-        DEVICE_PTR l1_addr = l1_in_img;
-        DEVICE_PTR l2_addr = l2_in_img;
-
-        for (int i = 0; i < n_dma_tx; i++) {
-          dma_in[acc_id].job = hero_memcpy_host2dev_async(l1_addr, l2_addr, dma_payload_dim * sizeof(uint32_t));
-        }
-
-      }
-
-      /* ===================================================================== */
-
-      /* ===================== */
-      /*  Profiling - COMPUTE  */
-      /* ===================== */
-
-      /* Wait DMA to terminate data transfer, then launch computation */
-
-      for(int acc_id=0; acc_id<n_hwpe_active; acc_id++){
-        hero_dma_wait(dma_in[acc_id].job);
-        if (l1_buffer_dim>0) arov_compute(&arov, cluster_id, acc_id);
-        // if (l1_buffer_dim>0) pulp_write32(0x1b202000 + acc_id * 0x200, 0);
-      }
-
-      /* Wait for computation to terminate, then issue data transfers to L2 */
-
-      for(int acc_id=0; acc_id<n_hwpe_active; acc_id++){
-        
-        if (l1_buffer_dim>0){ 
-          while(!arov_is_finished(&arov, cluster_id, acc_id)){
-            arov_wait_eu(&arov, cluster_id, acc_id);
-          }
-        }
-
-        // DEVICE_PTR l1_addr = l1_arov_buffer; // (DEVICE_PTR)(arov_get_dev_w_reqs_addr(&arov, cluster_id, acc_id));
-        // DEVICE_PTR l2_addr = l2_in_img;
-
-        // for (int i = 0; i < n_dma_tx; i++) {
-        //   // dma_out[acc_id].job = hero_memcpy_dev2host_async(l2_addr, l1_addr, dma_payload_dim * sizeof(uint32_t));
-        //   dma_out[acc_id].job = hero_memcpy_dev2host_async_no_trigger(l2_addr, l1_addr, dma_payload_dim * sizeof(uint32_t));
-        // }
-
-      }
-
-  //     /* ===================================================================== */
-
-      // /* ============================== */
-      // /*  Profiling - DMA output image  */
-      // /* ============================== */
-
-  //     /* Wait DMA to terminate data transfer */
-
-  //     // for(int acc_id=0; acc_id<n_hwpe_active; acc_id++){
-  //     //   hero_dma_wait(dma_out[acc_id].job);
-  //     // }
-
-  //     /* ===================================================================== */
-
-  //     /* MEASUREMENT - END */
-
-  //     // Cluster synchronization barrier
-  //     cluster_barrier_eu_soc_evt(cluster_id, experiment_id);
-
-  //     // Cluster timer
-  //     if(!cluster_id) t_experiment_sys_pov.cnt_1 = hero_get_clk_counter();
-
-  //     // Cache statistics and performance counters
-  //     stop_measurement(cluster_id, core_id, hit, trns, miss);
-
-  //     // Update measured cache stats
-  //     reg_hit  += hit[1] - hit[0];
-  //     reg_trns += trns[1] - trns[0];
-  //     reg_miss += miss[1] - miss[0];
-
-  //     /* ===================================================================== */
-
-  //     /* Print statistics */
-
-  //     print_job_stats(
-  //       // System
-  //       cluster_id, 
-  //       core_id, 
-  //       // Experiment
-  //       experiment_id, 
-  //       job_id, 
-  //       "L2", 
-  //       // Runtime parameters
-  //       n_hwpe_active, 
-  //       dma_payload_dim, 
-  //       l1_buffer_dim, 
-  //       n_reps_img,
-  //       n_total_reqs,
-  //       // Cache
-  //       &reg_hit,
-  //       &reg_trns, 
-  //       &reg_miss, 
-  //       // Clock counters
-  //       0xFFFFFFFF,
-  //       &t_experiment_sys_pov
-  //     );
-
-  //     /* Restart clusters */
-
-  //     if(!cluster_id) cluster_slv_restart_eu_soc_evt(cluster_id, experiment_id);
-
-    } // job_id
-
-  //   /* Cleaning accelerators */
-
-  //   for(int acc_id=0; acc_id<n_hwpe_active; acc_id++){
-  //     arov_free(&arov, cluster_id, acc_id);
-  //   }
-
-  //   /* Cleaning L1 and L2 */
+    // THRESHOLD_CV
     
-  //   #if defined(_pulp_rt_)
-  //     hero_l3free(l2_in_img);
-  //     hero_l3free(l2_w_reqs_data);
-  //     hero_l1free(l1_arov_buffer);
-  //   #endif
-  
-    experiment_id++;
+    arov_compute(&arov, cluster_id, THRESHOLD_CV);
+    
+    while(!arov_is_finished(&arov, cluster_id, THRESHOLD_CV)){
+      arov_wait_eu(&arov, cluster_id, THRESHOLD_CV);
+    }
 
-  } // n_reps_img
+    // ERODE_CV
+
+    arov_compute(&arov, cluster_id, ERODE_CV);
+    
+    while(!arov_is_finished(&arov, cluster_id, ERODE_CV)){
+      arov_wait_eu(&arov, cluster_id, ERODE_CV);
+    }
+
+    // DILATE_CV
+
+    arov_compute(&arov, cluster_id, DILATE_CV);
+    
+    while(!arov_is_finished(&arov, cluster_id, DILATE_CV)){
+      arov_wait_eu(&arov, cluster_id, DILATE_CV);
+    }
+
+    // Update buffer pointers for DILATE_CV
+    arov.dilate_cv_0_3.img_in.tcdm.ptr = l1_img_e; 
+    arov.dilate_cv_0_3.img_out.tcdm.ptr = l1_img_f; 
+    arov_update_buffer_addr(&arov, cluster_id, DILATE_CV);
+
+    // Update buffer pointers for ERODE_CV
+    arov.erode_cv_0_2.img_in.tcdm.ptr = l1_img_f; 
+    arov.erode_cv_0_2.img_out.tcdm.ptr = l1_img_g; 
+    arov_update_buffer_addr(&arov, cluster_id, ERODE_CV);
+
+    // DILATE_CV
+
+    arov_compute(&arov, cluster_id, DILATE_CV);
+    
+    while(!arov_is_finished(&arov, cluster_id, DILATE_CV)){
+      arov_wait_eu(&arov, cluster_id, DILATE_CV);
+    }
+
+    // ERODE_CV
+
+    arov_compute(&arov, cluster_id, ERODE_CV);
+    
+    while(!arov_is_finished(&arov, cluster_id, ERODE_CV)){
+      arov_wait_eu(&arov, cluster_id, ERODE_CV);
+    }
+
+    /* Transfer input image from L2 */
+
+    for (int i = 0; i < n_dma_tx; i++) {
+      dma_out[ERODE_CV].job = hero_memcpy_dev2host_async(l2_img_g, l1_img_g, dma_payload_dim * sizeof(uint32_t));
+    }
+
+    /* Wait DMA to terminate data transfer */
+
+    hero_dma_wait(dma_in[ERODE_CV].job);
+
+    /* ===================================================================== */
+
+    /* MEASUREMENT - END */
+
+    // Cluster synchronization barrier
+    cluster_barrier_eu_soc_evt(cluster_id, experiment_id);
+
+    // Cluster timer
+    if(!cluster_id) t_experiment_sys_pov.cnt_1 = hero_get_clk_counter();
+
+    // Cache statistics and performance counters
+    stop_measurement(cluster_id, core_id, hit, trns, miss);
+
+    // Update measured cache stats
+    reg_hit  += hit[1] - hit[0];
+    reg_trns += trns[1] - trns[0];
+    reg_miss += miss[1] - miss[0];
+
+    /* ===================================================================== */
+
+    /* Print statistics */
+
+    print_job_stats(
+      // System
+      cluster_id, 
+      core_id, 
+      // Experiment
+      experiment_id, 
+      job_id, 
+      "color_detect_1cl_small", 
+      // Cache
+      &reg_hit,
+      &reg_trns, 
+      &reg_miss, 
+      // Clock counters
+      0xFFFFFFFF,
+      &t_experiment_sys_pov
+    );
+
+    /* Restart clusters */
+
+    if(!cluster_id) cluster_slv_restart_eu_soc_evt(cluster_id, experiment_id);
+
+  } // job_id
+
+  /* Cleaning accelerators */
+
+  for(int acc_id=0; acc_id<n_hwpe_active; acc_id++){
+    arov_free(&arov, cluster_id, acc_id);
+  }
+
+  /* Cleaning L1 and L2 */
+  
+  #if defined(_pulp_rt_)
+    hero_l3free(l2_in_img);
+    hero_l3free(l2_w_reqs_data);
+    hero_l1free(l1_arov_buffer);
+  #endif
+
+  experiment_id++;
 }

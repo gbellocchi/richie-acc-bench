@@ -29,9 +29,6 @@ int print_job_stats(
   const int experiment_id, 
   const int job_id, 
   const char *component_name,
-  // Runtime parameters
-  int n_reps,
-  int n_total_reqs,
   // Cache
   int *reg_hit, 
   int *reg_trns, 
@@ -86,10 +83,8 @@ int print_job_stats(
 
       printf(" # - [Params] N_clusters:             %d \n",           (int32_t)n_clusters);
       printf(" # - [Params] N_acc:                  %d \n",           (int32_t)n_hwpe_active);
-      printf(" # - [Params] N_reps:                 %d \n",           (int32_t)n_reps);
       printf(" # - [Params] DIM_dma_payload:        %d \n",           (int32_t)dma_payload_dim);
       printf(" # - [Params] DIM_buffer:             %d \n",           (int32_t)l1_buffer_dim);
-      printf(" # - [Params] DIM_burst:              %d \n",           (int32_t)n_total_reqs);
       printf(" # - [Params] N_l1_banks:             %d \n",           (int32_t)n_l1_ports);
       printf(" # - [Params] N_L2_ports:             %d \n",           (int32_t)n_l2_ports_phy);
 
