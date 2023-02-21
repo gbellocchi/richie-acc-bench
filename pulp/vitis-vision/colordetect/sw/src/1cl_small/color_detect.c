@@ -35,11 +35,11 @@ void color_detect_pipeline_map_params(
 
   // Input image
   
-  wrapper->img_in.addr_gen.trans_size                   = 128 * 128;
+  wrapper->img_in.addr_gen.trans_size                   = params->rows * params->cols;
   wrapper->img_in.addr_gen.line_stride                  = 0; 
-  wrapper->img_in.addr_gen.line_length                  = 128 * 128;
+  wrapper->img_in.addr_gen.line_length                  = (params->rows * params->cols) / l1_n_img_tiles;
   wrapper->img_in.addr_gen.feat_stride                  = 0; 
-  wrapper->img_in.addr_gen.feat_length                  = 1; 
+  wrapper->img_in.addr_gen.feat_length                  = l1_n_img_tiles; 
   wrapper->img_in.addr_gen.feat_roll                    = 0; 
   wrapper->img_in.addr_gen.loop_outer                   = 0; 
   wrapper->img_in.addr_gen.realign_type                 = 0; 
@@ -47,11 +47,11 @@ void color_detect_pipeline_map_params(
 
   // Output image
 
-  wrapper->img_out.addr_gen.trans_size                  = 128 * 128; 
+  wrapper->img_out.addr_gen.trans_size                  = params->rows * params->cols;
   wrapper->img_out.addr_gen.line_stride                 = 0; 
-  wrapper->img_out.addr_gen.line_length                 = 128 * 128; 
+  wrapper->img_out.addr_gen.line_length                 = (params->rows * params->cols) / l1_n_img_tiles; 
   wrapper->img_out.addr_gen.feat_stride                 = 0; 
-  wrapper->img_out.addr_gen.feat_length                 = 1; 
+  wrapper->img_out.addr_gen.feat_length                 = l1_n_img_tiles; 
   wrapper->img_out.addr_gen.feat_roll                   = 0; 
   wrapper->img_out.addr_gen.loop_outer                  = 0; 
   wrapper->img_out.addr_gen.realign_type                = 0; 

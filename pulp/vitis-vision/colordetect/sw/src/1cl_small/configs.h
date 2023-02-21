@@ -22,20 +22,14 @@
 // System architecture
 #define n_clusters                          1
 #define n_hwpe_total                        4
-
-// Event unit
-#define max_num_sw_evt                      8
+#define n_hwpe_active                       n_hwpe_total
 
 // - Workload dimension (DMA and COMPUTE)
 // Typical values: [1: FINE-GRAINED, 16: COARSE-GRAINED, 64: MAX]
 #define dim_exp_workload                    1
 
 // - Length of job queue
-#define exp_len_job_queue                   1
-
-// - HWPE traffic generator
-#define n_read_ports                        1
-#define n_write_ports                       1
+#define exp_len_job_queue                   8
 
 // - L2
 #define l2_size_B                           128*1024*16 // bytes
@@ -49,31 +43,25 @@
 #define l2_img_dim                          l2_img_rows*l2_img_cols
 #define l2_buffer_dim                       l2_img_dim
 
+// - DMA 
+#define n_dma_tx                            16 // Number of transfers (for one outer transfer)
+#define dma_payload_dim                     l2_img_dim/n_dma_tx // Payload dimension
+
 // - L1
 #define l1_size_B                           128*1024 // bytes
 #define n_l1_ports                          16
 
 // - L1 tiled image buffer
 // Decided on top of worst-case scenario (16 accelerators in 1 cluster)
-#define l1_n_img_tiles                      1
+#define l1_n_img_tiles                      16 // Number of repetitions of L1 buffer (to emulate bigger L1 memory)
 #define l1_buffer_dim                       l2_buffer_dim/l1_n_img_tiles
 
 // - L2/L1 optimizations
 // #define l2_double_buffering
 // #define l1_double_buffering
 
-// - DMA number of transfers (for one outer transfer)
-#define n_dma_tx                            1
-
-// - DMA payload dimension
-#define dma_payload_dim                     l1_buffer_dim/n_dma_tx
-
-// - Number of active accelerators
-#define n_hwpe_active                       n_hwpe_total
-
-// - Image buffer reuse factor
-#define n_reps_img_start                    1
-#define n_reps_img_stop                     1
+// Event unit
+#define max_num_sw_evt                      8
 
 /* ===================================================================== */
 

@@ -55,13 +55,33 @@ void run_1cl_small(const int cluster_id, const int core_id) {
   // Declare L2 cluster buffer address  
   DEVICE_PTR_CONST l2_cl_addr             = l2_cl_base + (cluster_id - (l2_cl_port_id - l2_cl_port_id_offset) * l2_n_cl_per_port) * dma_payload_dim;
 
+  #ifndef l2_double_buffering
   // Declare L2 image buffers
-  DEVICE_PTR_CONST l2_in_img              = l2_cl_addr;
-  DEVICE_PTR_CONST l2_out_img             = l2_in_img + l2_buffer_dim;
+  DEVICE_PTR_CONST l2_img_a               = l2_cl_addr; // raw image (input image)
+  DEVICE_PTR_CONST l2_img_b               = l2_img_a + l2_buffer_dim; // rgb2hsv
+  DEVICE_PTR_CONST l2_img_c               = l2_img_b + l2_buffer_dim; // threshold
+  DEVICE_PTR_CONST l2_img_d               = l2_img_c + l2_buffer_dim; // erode 1
+  DEVICE_PTR_CONST l2_img_e               = l2_img_d + l2_buffer_dim; // dilate 1
+  DEVICE_PTR_CONST l2_img_f               = l2_img_e + l2_buffer_dim; // dilate 2
+  DEVICE_PTR_CONST l2_img_g               = l2_img_f + l2_buffer_dim; // erode 2 (output image)
+  # else
+  // Declare L2 image buffers
+  DEVICE_PTR_CONST l2_img_a_0             = l2_cl_addr; // raw image (input image)
+  DEVICE_PTR_CONST l2_img_b_0             = l2_img_a_0 + l2_buffer_dim; // rgb2hsv
+  DEVICE_PTR_CONST l2_img_c_0             = l2_img_b_0 + l2_buffer_dim; // threshold
+  DEVICE_PTR_CONST l2_img_d_0             = l2_img_c_0 + l2_buffer_dim; // erode 1
+  DEVICE_PTR_CONST l2_img_e_0             = l2_img_d_0 + l2_buffer_dim; // dilate 1
+  DEVICE_PTR_CONST l2_img_f_0             = l2_img_e_0 + l2_buffer_dim; // dilate 2
+  DEVICE_PTR_CONST l2_img_g_0             = l2_img_f_0 + l2_buffer_dim; // erode 2 (output image)
 
-  // [TO-DO] ...Then also intermediate result buffers are to be declared 
-
-  // ...
+  DEVICE_PTR_CONST l2_img_a_1             = l2_img_g_0 + l2_buffer_dim; // raw image (input image)
+  DEVICE_PTR_CONST l2_img_b_1             = l2_img_a_1 + l2_buffer_dim; // rgb2hsv
+  DEVICE_PTR_CONST l2_img_c_1             = l2_img_b_1 + l2_buffer_dim; // threshold
+  DEVICE_PTR_CONST l2_img_d_1             = l2_img_c_1 + l2_buffer_dim; // erode 1
+  DEVICE_PTR_CONST l2_img_e_1             = l2_img_d_1 + l2_buffer_dim; // dilate 1
+  DEVICE_PTR_CONST l2_img_f_1             = l2_img_e_1 + l2_buffer_dim; // dilate 2
+  DEVICE_PTR_CONST l2_img_g_1             = l2_img_f_1 + l2_buffer_dim; // erode 2 (output image)
+  #endif
 
   #if defined(PRINT_LOG)
     printf(" # - [Params] ID_L2_port:             %d \n",           (int32_t)l2_cl_port_id);
@@ -84,9 +104,33 @@ void run_1cl_small(const int cluster_id, const int core_id) {
     DEVICE_PTR_CONST l1_arov_buffer    = arov_l1_heap(cluster_id) + n_l1_ports * sizeof(uint32_t);
   #endif
 
+  #ifndef l2_double_buffering
   // Declare L1 image buffers
-  DEVICE_PTR_CONST l1_in_img              = l1_arov_buffer;
-  DEVICE_PTR_CONST l1_out_img             = l1_in_img + l1_buffer_dim;
+  DEVICE_PTR_CONST l1_img_a               = l1_arov_buffer; // raw image (input image)
+  DEVICE_PTR_CONST l1_img_b               = l1_img_a + l1_buffer_dim; // rgb2hsv
+  DEVICE_PTR_CONST l1_img_c               = l1_img_b + l1_buffer_dim; // threshold
+  DEVICE_PTR_CONST l1_img_d               = l1_img_c + l1_buffer_dim; // erode 1
+  DEVICE_PTR_CONST l1_img_e               = l1_img_d + l1_buffer_dim; // dilate 1
+  DEVICE_PTR_CONST l1_img_f               = l1_img_e + l1_buffer_dim; // dilate 2
+  DEVICE_PTR_CONST l1_img_g               = l1_img_f + l1_buffer_dim; // erode 2 (output image)
+  # else
+  // Declare L1 image buffers
+  DEVICE_PTR_CONST l1_img_a_0             = l1_arov_buffer; // raw image (input image)
+  DEVICE_PTR_CONST l1_img_b_0             = l1_img_a_0 + l1_buffer_dim; // rgb2hsv
+  DEVICE_PTR_CONST l1_img_c_0             = l1_img_b_0 + l1_buffer_dim; // threshold
+  DEVICE_PTR_CONST l1_img_d_0             = l1_img_c_0 + l1_buffer_dim; // erode 1
+  DEVICE_PTR_CONST l1_img_e_0             = l1_img_d_0 + l1_buffer_dim; // dilate 1
+  DEVICE_PTR_CONST l1_img_f_0             = l1_img_e_0 + l1_buffer_dim; // dilate 2
+  DEVICE_PTR_CONST l1_img_g_0             = l1_img_f_0 + l1_buffer_dim; // erode 2 (output image)
+
+  DEVICE_PTR_CONST l1_img_a_1             = l1_img_g_0 + l1_buffer_dim; // raw image (input image)
+  DEVICE_PTR_CONST l1_img_b_1             = l1_img_a_1 + l1_buffer_dim; // rgb2hsv
+  DEVICE_PTR_CONST l1_img_c_1             = l1_img_b_1 + l1_buffer_dim; // threshold
+  DEVICE_PTR_CONST l1_img_d_1             = l1_img_c_1 + l1_buffer_dim; // erode 1
+  DEVICE_PTR_CONST l1_img_e_1             = l1_img_d_1 + l1_buffer_dim; // dilate 1
+  DEVICE_PTR_CONST l1_img_f_1             = l1_img_e_1 + l1_buffer_dim; // dilate 2
+  DEVICE_PTR_CONST l1_img_g_1             = l1_img_f_1 + l1_buffer_dim; // erode 2 (output image)
+  #endif
 
   // [TO-DO] ...Then also intermediate result buffers are to be declared 
 
