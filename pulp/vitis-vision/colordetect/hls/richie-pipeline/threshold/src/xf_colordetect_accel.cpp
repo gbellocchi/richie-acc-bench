@@ -20,7 +20,7 @@ static constexpr int __XF_DEPTH = (HEIGHT * WIDTH * (XF_PIXELWIDTH(IN_TYPE, NPC1
 static constexpr int __XF_DEPTH_OUT = (HEIGHT * WIDTH * (XF_PIXELWIDTH(OUT_TYPE, NPC1)) / 8) / (OUTPUT_PTR_WIDTH / 8);
 static constexpr int __XF_DEPTH_FILTER = (FILTER_SIZE * FILTER_SIZE);
 
-void threshold(
+void threshold_cv(
     stream_in_t &img_in, 
     stream_out_t &img_out, 
     int rows,
@@ -30,8 +30,8 @@ void threshold(
     #pragma HLS INTERFACE axis register both port=img_in depth=__XF_DEPTH
     #pragma HLS INTERFACE axis register both port=img_out depth=__XF_DEPTH_OUT
 
-    xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1> rgb2hsv(rows, cols);
-    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1> imgHelper1(rows, cols);
+    xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1> threshold_in(rows, cols);
+    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1> threshold_out(rows, cols);
 
     // local parameters
     unsigned char low_thresh[FILTER_SIZE*FILTER_SIZE];
@@ -63,25 +63,23 @@ void threshold(
         process_shape[i] = 1;
     }
 
-    // Copy the shape data:
+    // Copy the shape data
     unsigned char _kernel[FILTER_SIZE * FILTER_SIZE];
     for (unsigned int i = 0; i < FILTER_SIZE * FILTER_SIZE; ++i) {
-// clang-format off
         #pragma HLS PIPELINE
-        // clang-format on
         _kernel[i] = process_shape[i];
     }
 
     #pragma HLS DATAFLOW
     
-    // Retrieve xf::cv::Mat objects from img_in data:
-    xf::cv::AXIvideo2xfMat<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1>(img_in, rgb2hsv);
+    // Retrieve xf::cv::Mat objects from input stream
+    xf::cv::AXIvideo2xfMat<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1>(img_in, threshold_in);
 
-    // Do the color thresholding:
-    xf::cv::colorthresholding<IN_TYPE, OUT_TYPE, MAXCOLORS, HEIGHT, WIDTH, NPC1>(rgb2hsv, imgHelper1, low_thresh, high_thresh);
+    // Do the color thresholding
+    xf::cv::colorthresholding<IN_TYPE, OUT_TYPE, MAXCOLORS, HEIGHT, WIDTH, NPC1>(threshold_in, threshold_out, low_thresh, high_thresh);
 
-    // Convert _dst xf::cv::Mat object to output array:
-    xf::cv::xfMat2AXIvideo<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(imgHelper1, img_out);
+    // Convert _dst xf::cv::Mat object to output stream
+    xf::cv::xfMat2AXIvideo<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(threshold_out, img_out);
 
     return;
 

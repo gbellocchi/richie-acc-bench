@@ -14,7 +14,7 @@ XF_PROJ_ROOT 	?= $(shell bash -c 'export MK_PATH=$(MK_PATH);')
 PRJ_ROOT		= $(CUR_DIR)
 PRJ_NAME 		:= colordetect.prj
 SOL_NAME 		:= sol1
-ACC_NAME 		:= rgb2hsv
+ACC_NAME 		:= rgb2hsv_cv
 
 # Vitis commands
 CSIM			?= 1

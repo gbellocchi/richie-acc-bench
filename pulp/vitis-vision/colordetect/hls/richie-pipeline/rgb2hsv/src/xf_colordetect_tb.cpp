@@ -76,7 +76,7 @@ void colordetect_dut_wrapper(cv::Mat& _src, cv::Mat& _dst, int rows, int cols, u
     cvMat2AXIvideoxf<NPC1>(_src, stream_dut_in);
 
     // Execute DUT
-    rgb2hsv(
+    rgb2hsv_cv(
         (stream_in_t &)stream_dut_in, 
         (stream_in_t &)stream_dut_out,
         rows, 
@@ -86,7 +86,7 @@ void colordetect_dut_wrapper(cv::Mat& _src, cv::Mat& _dst, int rows, int cols, u
     // Retrieve DUT output stream and convert to xf::cv::Mat object
     xf::cv::AXIvideo2xfMat<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1>(stream_dut_out, _rgb2hsv);
 
-    // Execute remaining pipeline stages
+    // Do color thresholding, then use erode and dilate to to fully mark color areas
     xf::cv::colorthresholding<IN_TYPE, OUT_TYPE, MAXCOLORS, HEIGHT, WIDTH, NPC1>(_rgb2hsv, _imgHelper1, low_thresh, high_thresh);
     xf::cv::erode<XF_BORDER_CONSTANT, OUT_TYPE, HEIGHT, WIDTH, XF_KERNEL_SHAPE, FILTER_SIZE, FILTER_SIZE, ITERATIONS, NPC1>(_imgHelper1, _imgHelper2, process_shape);
     xf::cv::dilate<XF_BORDER_CONSTANT, OUT_TYPE, HEIGHT, WIDTH, XF_KERNEL_SHAPE, FILTER_SIZE, FILTER_SIZE, ITERATIONS, NPC1>(_imgHelper2, _imgHelper3, process_shape);

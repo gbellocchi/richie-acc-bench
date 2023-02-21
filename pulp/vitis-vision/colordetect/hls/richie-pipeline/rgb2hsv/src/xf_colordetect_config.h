@@ -90,7 +90,7 @@ typedef hls::stream<interface_in_t> stream_in_t;
 typedef ap_axiu<OUTPUT_PTR_WIDTH,1,1,1> interface_out_t;
 typedef hls::stream<interface_out_t> stream_out_t;
 
-void rgb2hsv(
+void rgb2hsv_cv(
     stream_in_t &img_in, 
     stream_in_t &img_out, 
     int rows,
