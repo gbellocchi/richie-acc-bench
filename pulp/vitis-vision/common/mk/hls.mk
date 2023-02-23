@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# Additional contribution: Gianluca Bellocchi, University of Modena and Reggio Emilia
+#
 
 # MK_INC_BEGIN hls_common.mk
 
@@ -249,8 +251,8 @@ setup: | check_part #check_opencv
 	@cat ./settings.tcl
 	@echo "----"
 
-HLS ?= vitis_hls
-runhls: data setup | check_vivado # check_vpp
+HLS ?= ${VITIS_HLS}
+runhls: data setup | # check_vivado check_vpp
 	$(HLS) -f $(TCL_DIR)/run_hls.tcl;
 
 clean:
