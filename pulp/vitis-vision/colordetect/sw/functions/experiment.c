@@ -68,33 +68,11 @@ void run_baseline(const int cluster_id, const int core_id) {
   // Declare L2 cluster buffer address  
   DEVICE_PTR_CONST l2_cl_addr             = l2_cl_base + (cluster_id - (l2_cl_port_id - l2_cl_port_id_offset) * l2_n_cl_per_port) * dma_payload_dim;
 
-  #ifndef l2_double_buffering
   // Declare L2 image buffers
-  DEVICE_PTR_CONST l2_img_a               = l2_cl_addr; // raw image (input image)
-  DEVICE_PTR_CONST l2_img_b               = l2_img_a + l2_buffer_dim; // rgb2hsv
-  DEVICE_PTR_CONST l2_img_c               = l2_img_b + l2_buffer_dim; // threshold
-  DEVICE_PTR_CONST l2_img_d               = l2_img_c + l2_buffer_dim; // erode 1
-  DEVICE_PTR_CONST l2_img_e               = l2_img_d + l2_buffer_dim; // dilate 1
-  DEVICE_PTR_CONST l2_img_f               = l2_img_e + l2_buffer_dim; // dilate 2
-  DEVICE_PTR_CONST l2_img_g               = l2_img_f + l2_buffer_dim; // erode 2 (output image)
-  # else
-  // Declare L2 image buffers
-  DEVICE_PTR_CONST l2_img_a_0             = l2_cl_addr; // raw image (input image)
-  DEVICE_PTR_CONST l2_img_b_0             = l2_img_a_0 + l2_buffer_dim; // rgb2hsv
-  DEVICE_PTR_CONST l2_img_c_0             = l2_img_b_0 + l2_buffer_dim; // threshold
-  DEVICE_PTR_CONST l2_img_d_0             = l2_img_c_0 + l2_buffer_dim; // erode 1
-  DEVICE_PTR_CONST l2_img_e_0             = l2_img_d_0 + l2_buffer_dim; // dilate 1
-  DEVICE_PTR_CONST l2_img_f_0             = l2_img_e_0 + l2_buffer_dim; // dilate 2
-  DEVICE_PTR_CONST l2_img_g_0             = l2_img_f_0 + l2_buffer_dim; // erode 2 (output image)
+  DEVICE_PTR l2_img[l2_n_buffers];
 
-  DEVICE_PTR_CONST l2_img_a_1             = l2_img_g_0 + l2_buffer_dim; // raw image (input image)
-  DEVICE_PTR_CONST l2_img_b_1             = l2_img_a_1 + l2_buffer_dim; // rgb2hsv
-  DEVICE_PTR_CONST l2_img_c_1             = l2_img_b_1 + l2_buffer_dim; // threshold
-  DEVICE_PTR_CONST l2_img_d_1             = l2_img_c_1 + l2_buffer_dim; // erode 1
-  DEVICE_PTR_CONST l2_img_e_1             = l2_img_d_1 + l2_buffer_dim; // dilate 1
-  DEVICE_PTR_CONST l2_img_f_1             = l2_img_e_1 + l2_buffer_dim; // dilate 2
-  DEVICE_PTR_CONST l2_img_g_1             = l2_img_f_1 + l2_buffer_dim; // erode 2 (output image)
-  #endif
+  l2_img[0] = l2_cl_addr; // input image
+  l2_img[1] = l2_img[0] + l2_buffer_dim; // output image
 
   #if defined(PRINT_LOG)
     printf(" # - [Params] ID_L2_port:             %d \n",           (int32_t)l2_cl_port_id);
@@ -114,53 +92,30 @@ void run_baseline(const int cluster_id, const int core_id) {
   #if defined(_pulp_rt_)
     __device uint32_t* l1_arov_buffer   = (__device uint32_t*)hero_l1malloc(sizeof(uint32_t) * l1_arov_buffer_dim);
   #elif defined(_pulp_bare_)
-    DEVICE_PTR_CONST l1_arov_buffer    = arov_l1_heap(cluster_id) + n_l1_ports * sizeof(uint32_t);
+    DEVICE_PTR_CONST l1_arov_buffer    = arov_l1_heap(cluster_id);
   #endif
 
-  #ifndef l2_double_buffering
   // Declare L1 image buffers
-  DEVICE_PTR_CONST l1_img_a               = l1_arov_buffer; // raw image (input image)
-  DEVICE_PTR_CONST l1_img_b               = l1_img_a + l1_buffer_dim; // rgb2hsv
-  DEVICE_PTR_CONST l1_img_c               = l1_img_b + l1_buffer_dim; // threshold
-  DEVICE_PTR_CONST l1_img_d               = l1_img_c + l1_buffer_dim; // erode 1
-  DEVICE_PTR_CONST l1_img_e               = l1_img_d + l1_buffer_dim; // dilate 1
-  DEVICE_PTR_CONST l1_img_f               = l1_img_e + l1_buffer_dim; // dilate 2
-  DEVICE_PTR_CONST l1_img_g               = l1_img_f + l1_buffer_dim; // erode 2 (output image)
-  # else
-  // Declare L1 image buffers
-  DEVICE_PTR_CONST l1_img_a_0             = l1_arov_buffer; // raw image (input image)
-  DEVICE_PTR_CONST l1_img_b_0             = l1_img_a_0 + l1_buffer_dim; // rgb2hsv
-  DEVICE_PTR_CONST l1_img_c_0             = l1_img_b_0 + l1_buffer_dim; // threshold
-  DEVICE_PTR_CONST l1_img_d_0             = l1_img_c_0 + l1_buffer_dim; // erode 1
-  DEVICE_PTR_CONST l1_img_e_0             = l1_img_d_0 + l1_buffer_dim; // dilate 1
-  DEVICE_PTR_CONST l1_img_f_0             = l1_img_e_0 + l1_buffer_dim; // dilate 2
-  DEVICE_PTR_CONST l1_img_g_0             = l1_img_f_0 + l1_buffer_dim; // erode 2 (output image)
+  // DEVICE_PTR l1_img[l1_n_buffers];
 
-  DEVICE_PTR_CONST l1_img_a_1             = l1_img_g_0 + l1_buffer_dim; // raw image (input image)
-  DEVICE_PTR_CONST l1_img_b_1             = l1_img_a_1 + l1_buffer_dim; // rgb2hsv
-  DEVICE_PTR_CONST l1_img_c_1             = l1_img_b_1 + l1_buffer_dim; // threshold
-  DEVICE_PTR_CONST l1_img_d_1             = l1_img_c_1 + l1_buffer_dim; // erode 1
-  DEVICE_PTR_CONST l1_img_e_1             = l1_img_d_1 + l1_buffer_dim; // dilate 1
-  DEVICE_PTR_CONST l1_img_f_1             = l1_img_e_1 + l1_buffer_dim; // dilate 2
-  DEVICE_PTR_CONST l1_img_g_1             = l1_img_f_1 + l1_buffer_dim; // erode 2 (output image)
-  #endif
-
-  // [TO-DO] ...Then also intermediate result buffers are to be declared 
-
-  // ...
+  DEVICE_PTR_CONST l1_img_a = l1_arov_buffer; // input image
+  DEVICE_PTR_CONST l1_img_b = l1_img_a + l1_buffer_dim; // output image
 
   /* ===================================================================== */
 
   /* System */
 
-  pulp_dma_struct dma_in[n_hwpe_active], dma_out[n_hwpe_active], dma_wait[n_hwpe_active];
+  pulp_dma_struct dma_in[n_acc_active], dma_out[n_acc_active], dma_wait[n_acc_active];
+
+  uint8_t l1_sel = 1;
+  uint8_t l2_sel = 1;
 
   /* Accelerators */
 
   // Custom registers
   unsigned rows, cols;
 
-  int offload_id[n_hwpe_active];
+  int offload_id[n_acc_active];
 
   /* Allocate accelerator-rich overlay */
 
@@ -213,107 +168,183 @@ void run_baseline(const int cluster_id, const int core_id) {
     start_measurement(cluster_id, core_id, hit, trns, miss);
 
     // Cluster synchronization barrier
-    cluster_barrier_eu_soc_evt(cluster_id, experiment_id);
+    cluster_barrier_eu_soc_evt(cluster_id, 0);
 
     // Cluster timer
     if(!cluster_id) t_experiment_sys_pov.cnt_0 = hero_get_clk_counter();
 
     // Activate clusters simultaneously
     // NB: Activation must be after the starting of time measurements
-    if(!cluster_id) cluster_slv_restart_eu_soc_evt(cluster_id, experiment_id);
+    if(!cluster_id) cluster_slv_restart_eu_soc_evt(cluster_id, 0);
 
     /* ===================================================================== */
 
-    /* ============================= */
     /*  Profiling - Color detection  */
-    /* ============================= */
 
-    /* Transfer input image from L2 */
+    // Analyze image by image
+    for(int i_img=0; i_img<n_img; i_img++){
 
-    for (int i = 0; i < n_dma_tx; i++) {
-      dma_in[RGB2HSV_CV].job = hero_memcpy_host2dev_async(l1_img_a, l2_img_a, dma_payload_dim * sizeof(uint32_t));
-    }
+      // Analyze tile by tile
+      for(int i_l2_tile=0; i_l2_tile<l2_n_tiles; i_l2_tile++){
 
-    /* Wait DMA to terminate data transfer */
+        /* Update L1 and L2 buffers */
 
-    hero_dma_wait(dma_in[RGB2HSV_CV].job);
+        run_id = i_img * n_img + i_l2_tile;
 
-    /* Pipeline */
+        if(!run_id){
 
-    // RGB2HSV_CV
+          /* Runtime experiment parameters */
 
-    arov_compute(&arov, cluster_id, RGB2HSV_CV);
+          // - Number of image rows
+          rows = img_tile/img_rows_min; 
 
-    while(!arov_is_finished(&arov, cluster_id, RGB2HSV_CV)){
-      arov_wait_eu(&arov, cluster_id, RGB2HSV_CV);
-    }
+          // - Number of image columns
+          cols = img_cols_min;  
 
-    // THRESHOLD_CV
-    
-    arov_compute(&arov, cluster_id, THRESHOLD_CV);
-    
-    while(!arov_is_finished(&arov, cluster_id, THRESHOLD_CV)){
-      arov_wait_eu(&arov, cluster_id, THRESHOLD_CV);
-    }
+          #if defined(PRINT_LOG)
+            printf(" # - [Params] rows:                   %d \n",           (int32_t)rows);
+            printf(" # - [Params] cols:                   %d \n",           (int32_t)cols);
+          #endif
 
-    // ERODE_CV
+          /* Program accelerators */
 
-    arov_compute(&arov, cluster_id, ERODE_CV);
-    
-    while(!arov_is_finished(&arov, cluster_id, ERODE_CV)){
-      arov_wait_eu(&arov, cluster_id, ERODE_CV);
-    }
+          for(int acc_id=0; acc_id<n_acc_active; acc_id++){
 
-    // DILATE_CV
+            // Initialization
+            arov_init(&arov, cluster_id, acc_id);
+            
+            // -- rgb2hsv - Map parameters
+            if (cluster_id==0 && acc_id==0) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_img_a, l1_img_b, l1_buffer_dim, rows, cols);
+            // -- threshold - Map parameters
+            if (cluster_id==0 && acc_id==1) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_img_b, l1_img_a, l1_buffer_dim, rows, cols);
+            // -- erode - Map parameters
+            if (cluster_id==0 && acc_id==2) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_img_a, l1_img_b, l1_buffer_dim, rows, cols);
+            // -- dilate - Map parameters
+            if (cluster_id==0 && acc_id==3) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_img_b, l1_img_a, l1_buffer_dim, rows, cols);
 
-    arov_compute(&arov, cluster_id, DILATE_CV);
-    
-    while(!arov_is_finished(&arov, cluster_id, DILATE_CV)){
-      arov_wait_eu(&arov, cluster_id, DILATE_CV);
-    }
+            // Activation and programming
+            offload_id[acc_id] = arov_activate(&arov, cluster_id, acc_id);
+            arov_program(&arov, cluster_id, acc_id);
 
-    // Update buffer pointers for DILATE_CV
-    arov.dilate_cv_0_3.img_in.tcdm.ptr = l1_img_e; 
-    arov.dilate_cv_0_3.img_out.tcdm.ptr = l1_img_f; 
-    arov_update_buffer_addr(&arov, cluster_id, DILATE_CV);
+          }
+        
+        } else {
 
-    // Update buffer pointers for ERODE_CV
-    arov.erode_cv_0_2.img_in.tcdm.ptr = l1_img_f; 
-    arov.erode_cv_0_2.img_out.tcdm.ptr = l1_img_g; 
-    arov_update_buffer_addr(&arov, cluster_id, ERODE_CV);
+          // Update buffer tokens
+          l2_sel = !l2_sel;
+          l1_sel = !l1_sel;
 
-    // DILATE_CV
+          // Update buffer pointers for RGB2HSV_CV
+          arov.rgb2hsv_cv_0_0.img_in.tcdm.ptr = l1_img_a; 
+          arov.rgb2hsv_cv_0_0.img_out.tcdm.ptr = l1_img_b; 
+          arov_update_buffer_addr(&arov, cluster_id, RGB2HSV_CV);
 
-    arov_compute(&arov, cluster_id, DILATE_CV);
-    
-    while(!arov_is_finished(&arov, cluster_id, DILATE_CV)){
-      arov_wait_eu(&arov, cluster_id, DILATE_CV);
-    }
+          // Update buffer pointers for THRESHOLD_CV
+          arov.threshold_cv_0_1.img_in.tcdm.ptr = l1_img_b; 
+          arov.threshold_cv_0_1.img_out.tcdm.ptr = l1_img_a; 
+          arov_update_buffer_addr(&arov, cluster_id, THRESHOLD_CV);
 
-    // ERODE_CV
+          // Update buffer pointers for ERODE_CV
+          arov.erode_cv_0_2.img_in.tcdm.ptr = l1_img_a; 
+          arov.erode_cv_0_2.img_out.tcdm.ptr = l1_img_b; 
+          arov_update_buffer_addr(&arov, cluster_id, ERODE_CV);
 
-    arov_compute(&arov, cluster_id, ERODE_CV);
-    
-    while(!arov_is_finished(&arov, cluster_id, ERODE_CV)){
-      arov_wait_eu(&arov, cluster_id, ERODE_CV);
-    }
+          // Update buffer pointers for DILATE_CV
+          arov.dilate_cv_0_3.img_in.tcdm.ptr = l1_img_b; 
+          arov.dilate_cv_0_3.img_out.tcdm.ptr = l1_img_a; 
+          arov_update_buffer_addr(&arov, cluster_id, DILATE_CV);
 
-    /* Transfer input image from L2 */
+        }
 
-    for (int i = 0; i < n_dma_tx; i++) {
-      dma_out[ERODE_CV].job = hero_memcpy_dev2host_async(l2_img_g, l1_img_g, dma_payload_dim * sizeof(uint32_t));
-    }
+        /* Transfer input image from L2 */
 
-    /* Wait DMA to terminate data transfer */
+        for (int i = 0; i < dma_n_tx; i++) {
+          dma_in[RGB2HSV_CV].job = hero_memcpy_host2dev_async(l1_img_a, l2_img[l2_sel], dma_payload_dim * sizeof(uint32_t));
+        }
 
-    hero_dma_wait(dma_in[ERODE_CV].job);
+        /* Wait DMA to terminate data transfer */
+
+        hero_dma_wait(dma_in[RGB2HSV_CV].job);
+
+        /* Pipeline */
+
+        // RGB2HSV_CV
+
+        arov_compute(&arov, cluster_id, RGB2HSV_CV);
+
+        while(!arov_is_finished(&arov, cluster_id, RGB2HSV_CV)){
+          arov_wait_eu(&arov, cluster_id, RGB2HSV_CV);
+        }
+
+        // THRESHOLD_CV
+        
+        arov_compute(&arov, cluster_id, THRESHOLD_CV);
+        
+        while(!arov_is_finished(&arov, cluster_id, THRESHOLD_CV)){
+          arov_wait_eu(&arov, cluster_id, THRESHOLD_CV);
+        }
+
+        // ERODE_CV
+
+        arov_compute(&arov, cluster_id, ERODE_CV);
+        
+        while(!arov_is_finished(&arov, cluster_id, ERODE_CV)){
+          arov_wait_eu(&arov, cluster_id, ERODE_CV);
+        }
+
+        // DILATE_CV
+
+        arov_compute(&arov, cluster_id, DILATE_CV);
+        
+        while(!arov_is_finished(&arov, cluster_id, DILATE_CV)){
+          arov_wait_eu(&arov, cluster_id, DILATE_CV);
+        }
+
+        // Update buffer pointers for DILATE_CV
+        arov.dilate_cv_0_3.img_in.tcdm.ptr = l1_img_a; 
+        arov.dilate_cv_0_3.img_out.tcdm.ptr = l1_img_b; 
+        arov_update_buffer_addr(&arov, cluster_id, DILATE_CV); // Necessary because DILATE_CV is instantiated once, but used more times in the processing pipeline
+
+        // Update buffer pointers for ERODE_CV
+        arov.erode_cv_0_2.img_in.tcdm.ptr = l1_img_b; 
+        arov.erode_cv_0_2.img_out.tcdm.ptr = l1_img_a; 
+        arov_update_buffer_addr(&arov, cluster_id, ERODE_CV); // Necessary because DILATE_CV is instantiated once, but used more times in the processing pipeline
+
+        // DILATE_CV
+
+        arov_compute(&arov, cluster_id, DILATE_CV);
+        
+        while(!arov_is_finished(&arov, cluster_id, DILATE_CV)){
+          arov_wait_eu(&arov, cluster_id, DILATE_CV);
+        }
+
+        // ERODE_CV
+
+        arov_compute(&arov, cluster_id, ERODE_CV);
+        
+        while(!arov_is_finished(&arov, cluster_id, ERODE_CV)){
+          arov_wait_eu(&arov, cluster_id, ERODE_CV);
+        }
+
+        /* Transfer input image from L2 */
+
+        for (int i = 0; i < dma_n_tx; i++) {
+          dma_out[ERODE_CV].job = hero_memcpy_dev2host_async(l2_img[l2_sel], l1_img_a, dma_payload_dim * sizeof(uint32_t));
+        }
+
+        /* Wait DMA to terminate data transfer */
+
+        hero_dma_wait(dma_in[ERODE_CV].job);
+
+      } // l2_n_tiles
+    } // n_img
 
     /* ===================================================================== */
 
     /* MEASUREMENT - END */
 
     // Cluster synchronization barrier
-    cluster_barrier_eu_soc_evt(cluster_id, experiment_id);
+    cluster_barrier_eu_soc_evt(cluster_id, 0);
 
     // Cluster timer
     if(!cluster_id) t_experiment_sys_pov.cnt_1 = hero_get_clk_counter();
