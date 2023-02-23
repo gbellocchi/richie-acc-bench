@@ -82,7 +82,7 @@ int print_job_stats(
     // Runtime parameters
 
       printf(" # - [Params] N_clusters:             %d \n",           (int32_t)n_clusters);
-      printf(" # - [Params] N_acc:                  %d \n",           (int32_t)n_hwpe_active);
+      printf(" # - [Params] N_acc:                  %d \n",           (int32_t)n_acc_active);
       printf(" # - [Params] DIM_dma_payload:        %d \n",           (int32_t)dma_payload_dim);
       printf(" # - [Params] DIM_buffer:             %d \n",           (int32_t)l1_buffer_dim);
       printf(" # - [Params] N_l1_banks:             %d \n",           (int32_t)n_l1_ports);
@@ -287,8 +287,8 @@ int profiling(const int cluster_id, const int core_id)
 
   /* Launch profiling */
   
-  #if defined(_profile_1cl_small_)
-    run_1cl_small(cluster_id, core_id);
+  #if defined(_profile_baseline_)
+    run_baseline(cluster_id, core_id);
   #endif
 
   if(cluster_id==0 && core_id==0){
