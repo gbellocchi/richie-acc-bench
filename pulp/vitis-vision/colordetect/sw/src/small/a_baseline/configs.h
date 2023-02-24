@@ -34,8 +34,9 @@
 
 // - L1
 #define l1_size_B                           128*1024 // bytes, real dimension
-#define l1_size_B_emulated                  128*1024 // bytes, emulated dimension
-#define n_l1_ports                          4
+#define l1_size_B_emulated                  256*1024 // bytes, emulated dimension
+#define n_l1_banks                          4
+#define l1_port_stride                      1 // to emulate small port utilization (can also be done in HW reducing the number of ports)
 
 // - L1 number of buffers (This depends on the type of optimization being adopted, e.g. pipelining, double buffering)
 #ifndef l1_pipelining
@@ -84,7 +85,7 @@
  * ===================================================================== */
 
 // - L2
-#define l2_size_B                           128*1024*16 // bytes
+#define l2_size_B                           512*1024 // bytes
 #define n_l2_ports_phy                      1
 #define n_l2_ports_virt                     1 // <= n_l2_ports_phy
 #define l2_cl_port_id_offset                0 // Offset on L2 port starting from port 0 (optional, default: 0)

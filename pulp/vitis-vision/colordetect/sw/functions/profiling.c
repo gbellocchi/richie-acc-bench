@@ -85,7 +85,7 @@ int print_job_stats(
       printf(" # - [Params] N_acc:                  %d \n",           (int32_t)n_acc_active);
       printf(" # - [Params] DIM_dma_payload:        %d \n",           (int32_t)dma_payload_dim);
       printf(" # - [Params] DIM_buffer:             %d \n",           (int32_t)l1_buffer_dim);
-      printf(" # - [Params] N_l1_banks:             %d \n",           (int32_t)n_l1_ports);
+      printf(" # - [Params] N_l1_banks:             %d \n",           (int32_t)n_l1_banks);
       printf(" # - [Params] N_L2_ports:             %d \n",           (int32_t)n_l2_ports_phy);
 
     printf(" #\n");

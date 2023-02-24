@@ -72,12 +72,13 @@ void run_baseline(const int cluster_id, const int core_id) {
   DEVICE_PTR l2_img[l2_n_buffers];
 
   l2_img[0] = l2_cl_addr; // input image
-  l2_img[1] = l2_img[0] + l2_buffer_dim; // output image
+  l2_img[0] = l2_img[0] + l2_buffer_dim; // output image
 
   #if defined(PRINT_LOG)
-    printf(" # - [Params] ID_L2_port:             %d \n",           (int32_t)l2_cl_port_id);
-    printf(" # - [Params] Base_address_L2:        %p \n",           (int32_t)l2_cl_base);
-    printf(" # - [Params] Buffer_address_L2:      %p \n",           (int32_t)l2_cl_addr);
+    printf(" # - [Params] l2_cl_port_id:          %d \n",           (int32_t)l2_cl_port_id);
+    printf(" # - [Params] l2_cl_base:             %p \n",           (int32_t)l2_cl_base);
+    printf(" # - [Params] l2_cl_addr:             %p \n",           (int32_t)l2_cl_addr);
+    printf(" # - [Params] l2_n_words_per_port:    %d \n",           (int32_t)l2_n_words_per_port);
   #endif
 
   #ifdef INPUT_INIT
@@ -96,10 +97,10 @@ void run_baseline(const int cluster_id, const int core_id) {
   #endif
 
   // Declare L1 image buffers
-  // DEVICE_PTR l1_img[l1_n_buffers];
+  DEVICE_PTR l1_img[l1_n_buffers];
 
-  DEVICE_PTR_CONST l1_img_a = l1_arov_buffer; // input image
-  DEVICE_PTR_CONST l1_img_b = l1_img_a + l1_buffer_dim; // output image
+  l1_img[0] = l1_arov_buffer; // input image
+  l1_img[0] = l1_img[0] + l1_buffer_dim; // output image
 
   /* ===================================================================== */
 
@@ -107,8 +108,8 @@ void run_baseline(const int cluster_id, const int core_id) {
 
   pulp_dma_struct dma_in[n_acc_active], dma_out[n_acc_active], dma_wait[n_acc_active];
 
-  uint8_t l1_sel = 1;
-  uint8_t l2_sel = 1;
+  uint8_t l1_sel = 0;
+  uint8_t l2_sel = 0;
 
   /* Accelerators */
 
@@ -213,14 +214,14 @@ void run_baseline(const int cluster_id, const int core_id) {
             // Initialization
             arov_init(&arov, cluster_id, acc_id);
             
-            // -- rgb2hsv - Map parameters
-            if (cluster_id==0 && acc_id==0) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_img_a, l1_img_b, l1_buffer_dim, rows, cols);
-            // -- threshold - Map parameters
-            if (cluster_id==0 && acc_id==1) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_img_b, l1_img_a, l1_buffer_dim, rows, cols);
-            // -- erode - Map parameters
-            if (cluster_id==0 && acc_id==2) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_img_a, l1_img_b, l1_buffer_dim, rows, cols);
-            // -- dilate - Map parameters
-            if (cluster_id==0 && acc_id==3) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_img_b, l1_img_a, l1_buffer_dim, rows, cols);
+            // -- RGB2HSV_CV - Map parameters
+            if (cluster_id==0 && acc_id==0) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_img[l1_sel], l1_img[!l1_sel], l1_buffer_dim, rows, cols);
+            // -- THRESHOLD_CV - Map parameters
+            if (cluster_id==0 && acc_id==1) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_img[!l1_sel], l1_img[l1_sel], l1_buffer_dim, rows, cols);
+            // -- ERODE_CV - Map parameters
+            if (cluster_id==0 && acc_id==2) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_img[l1_sel], l1_img[!l1_sel], l1_buffer_dim, rows, cols);
+            // -- DILATE_CV - Map parameters
+            if (cluster_id==0 && acc_id==3) arov_map_params_color_detect(&arov, cluster_id, acc_id, l1_img[!l1_sel], l1_img[l1_sel], l1_buffer_dim, rows, cols);
 
             // Activation and programming
             offload_id[acc_id] = arov_activate(&arov, cluster_id, acc_id);
@@ -235,23 +236,23 @@ void run_baseline(const int cluster_id, const int core_id) {
           l1_sel = !l1_sel;
 
           // Update buffer pointers for RGB2HSV_CV
-          arov.rgb2hsv_cv_0_0.img_in.tcdm.ptr = l1_img_a; 
-          arov.rgb2hsv_cv_0_0.img_out.tcdm.ptr = l1_img_b; 
+          arov.rgb2hsv_cv_0_0.img_in.tcdm.ptr = l1_img[l1_sel]; 
+          arov.rgb2hsv_cv_0_0.img_out.tcdm.ptr = l1_img[!l1_sel]; 
           arov_update_buffer_addr(&arov, cluster_id, RGB2HSV_CV);
 
           // Update buffer pointers for THRESHOLD_CV
-          arov.threshold_cv_0_1.img_in.tcdm.ptr = l1_img_b; 
-          arov.threshold_cv_0_1.img_out.tcdm.ptr = l1_img_a; 
+          arov.threshold_cv_0_1.img_in.tcdm.ptr = l1_img[!l1_sel]; 
+          arov.threshold_cv_0_1.img_out.tcdm.ptr = l1_img[l1_sel]; 
           arov_update_buffer_addr(&arov, cluster_id, THRESHOLD_CV);
 
           // Update buffer pointers for ERODE_CV
-          arov.erode_cv_0_2.img_in.tcdm.ptr = l1_img_a; 
-          arov.erode_cv_0_2.img_out.tcdm.ptr = l1_img_b; 
+          arov.erode_cv_0_2.img_in.tcdm.ptr = l1_img[l1_sel]; 
+          arov.erode_cv_0_2.img_out.tcdm.ptr = l1_img[!l1_sel]; 
           arov_update_buffer_addr(&arov, cluster_id, ERODE_CV);
 
           // Update buffer pointers for DILATE_CV
-          arov.dilate_cv_0_3.img_in.tcdm.ptr = l1_img_b; 
-          arov.dilate_cv_0_3.img_out.tcdm.ptr = l1_img_a; 
+          arov.dilate_cv_0_3.img_in.tcdm.ptr = l1_img[!l1_sel]; 
+          arov.dilate_cv_0_3.img_out.tcdm.ptr = l1_img[l1_sel]; 
           arov_update_buffer_addr(&arov, cluster_id, DILATE_CV);
 
         }
@@ -259,7 +260,7 @@ void run_baseline(const int cluster_id, const int core_id) {
         /* Transfer input image from L2 */
 
         for (int i = 0; i < dma_n_tx; i++) {
-          dma_in[RGB2HSV_CV].job = hero_memcpy_host2dev_async(l1_img_a, l2_img[l2_sel], dma_payload_dim * sizeof(uint32_t));
+          dma_in[RGB2HSV_CV].job = hero_memcpy_host2dev_async(l1_img[l1_sel], l2_img[l2_sel], dma_payload_dim * sizeof(uint32_t));
         }
 
         /* Wait DMA to terminate data transfer */
@@ -301,13 +302,13 @@ void run_baseline(const int cluster_id, const int core_id) {
         }
 
         // Update buffer pointers for DILATE_CV
-        arov.dilate_cv_0_3.img_in.tcdm.ptr = l1_img_a; 
-        arov.dilate_cv_0_3.img_out.tcdm.ptr = l1_img_b; 
+        arov.dilate_cv_0_3.img_in.tcdm.ptr = l1_img[l1_sel]; 
+        arov.dilate_cv_0_3.img_out.tcdm.ptr = l1_img[!l1_sel]; 
         arov_update_buffer_addr(&arov, cluster_id, DILATE_CV); // Necessary because DILATE_CV is instantiated once, but used more times in the processing pipeline
 
         // Update buffer pointers for ERODE_CV
-        arov.erode_cv_0_2.img_in.tcdm.ptr = l1_img_b; 
-        arov.erode_cv_0_2.img_out.tcdm.ptr = l1_img_a; 
+        arov.erode_cv_0_2.img_in.tcdm.ptr = l1_img[!l1_sel]; 
+        arov.erode_cv_0_2.img_out.tcdm.ptr = l1_img[l1_sel]; 
         arov_update_buffer_addr(&arov, cluster_id, ERODE_CV); // Necessary because DILATE_CV is instantiated once, but used more times in the processing pipeline
 
         // DILATE_CV
@@ -329,7 +330,7 @@ void run_baseline(const int cluster_id, const int core_id) {
         /* Transfer input image from L2 */
 
         for (int i = 0; i < dma_n_tx; i++) {
-          dma_out[ERODE_CV].job = hero_memcpy_dev2host_async(l2_img[l2_sel], l1_img_a, dma_payload_dim * sizeof(uint32_t));
+          dma_out[ERODE_CV].job = hero_memcpy_dev2host_async(l2_img[l2_sel], l1_img[l1_sel], dma_payload_dim * sizeof(uint32_t));
         }
 
         /* Wait DMA to terminate data transfer */
