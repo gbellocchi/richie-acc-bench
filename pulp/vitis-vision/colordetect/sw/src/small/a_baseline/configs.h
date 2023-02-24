@@ -15,6 +15,11 @@
 #ifndef __CONFIGS_H__
 #define __CONFIGS_H__
 
+#define SUM(a, b) ((float)a+b)
+#define DIV(a, b) ((float)a/b)
+#define ROUND_UP(N, S) (((((int)N) + ((int)S) - 1) / ((int)S)) * ((int)S))
+#define ROUND_DOWN(N,S) (((int)N / (int)S) * (int)S)
+
 /* =====================================================================
  * DSE parameters --> Application
  * ===================================================================== */
@@ -34,9 +39,9 @@
 
 // - L1
 #define l1_size_B                           128*1024 // bytes, real dimension
-#define l1_size_B_emulated                  256*1024 // bytes, emulated dimension
+#define l1_size_B_emulated                  256*1024 // bytes, emulated dimension (>=l1_size_B, must be a power of 2)
 #define n_l1_banks                          4
-#define l1_port_stride                      1 // to emulate small port utilization (can also be done in HW reducing the number of ports)
+#define l1_bank_stride                      1 // to emulate small port utilization (can also be done in HW reducing the number of ports)
 
 // - L1 number of buffers (This depends on the type of optimization being adopted, e.g. pipelining, double buffering)
 #ifndef l1_pipelining
@@ -53,7 +58,7 @@
 #define l1_buffer_dim                       ((int) (l1_size_B) / (4 * l1_n_buffers)) // Dimension of allocated buffer
                                     // This is also the dimension of the data tile executed by each processing stage of the cluster
                                     // Data are read row-by-row, so they can sequentialized with 1D DMA transfers
-#define l1_n_buffer_reps                    ((int) (l1_size_B_emulated) / (l1_size_B)) // Number of repetitions of L1 buffer 
+#define l1_n_buffer_reps                    ((img_dim == img_tile) ? 1 : ((int) (l1_size_B_emulated) / (l1_size_B))) // Number of repetitions of L1 buffer  
                                     // This parameter is used to emulate bigger L1 memory by:
                                         // 1. Looping the HWPE streamer over the same L1 buffer
                                         // 2. Looping the DMA over the same L1 buffer
@@ -71,11 +76,11 @@
 #define n_acc_active                        n_acc_total
 #define n_acc_stages                        6 // Total number of processing stages
 
-// Color detect
-#define n_img                               2 // Number of input images to be processed
-#define img_rows                            128
-#define img_cols                            128
-#define img_dim                             img_rows*img_cols
+// Application
+#define n_img                               4 // Number of input images to be processed
+#define img_rows                            128 
+#define img_cols                            128 
+#define img_dim                             img_rows*img_cols // SMALL: 128x128, FHD: 1920x1080, 4K: 3840x2160
 #define img_tile                            ((l1_buffer_dim >= img_dim) ? (img_dim) : (l1_buffer_dim))
 #define img_rows_min                        128
 #define img_cols_min                        128
@@ -94,7 +99,6 @@
 #define l2_n_cl_per_port                    ((int) (n_clusters) / (n_l2_ports_virt))
 #define l2_n_bytes_per_port                 ((int) (l2_size_B) / (n_l2_ports_phy))
 #define l2_n_words_per_port                 ((int) (l2_n_bytes_per_port) / (sizeof(uint32_t)))
-#define l2_cl_port_id                       ((int) (cluster_id) / (l2_n_cl_per_port)) + l2_cl_port_id_offset // Calculate port ID (Optional: L2 cluster port offset)
 
 // - L2 number of buffers (This depends on the type of optimization being adopted, e.g. pipelining, double buffering)
 #ifndef l2_pipelining
@@ -109,7 +113,7 @@
 
 // - L2 image buffer
 #define l2_buffer_dim                       img_tile // Equals dimension of tile passed to L1 memory
-#define l2_n_tiles                          ((img_dim == img_tile) ? 1 : ((int) (img_dim) / ((img_tile) * (l1_n_buffer_reps)))) // Number of tiles that are passed to L1 memory
+#define l2_n_tiles                          ((int) (img_dim) / ((img_tile) * (l1_n_buffer_reps))) // Number of tiles that are passed to L1 memory
 
 /* =====================================================================
  * DSE parameters --> Cluster peripherals
@@ -150,7 +154,7 @@
 
 /* Other macros */
 
-// #define PRINT_LOG
+#define PRINT_LOG
 // #define DEBUG_SYNCH_EU
 // #define INPUT_INIT
 

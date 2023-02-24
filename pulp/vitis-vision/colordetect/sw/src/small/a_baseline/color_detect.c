@@ -31,25 +31,25 @@ void rgb2hsv_cv_pipeline_map_params(
   
   wrapper->img_in.addr_gen.trans_size                   = params->rows * params->cols;
   wrapper->img_in.addr_gen.line_stride                  = 0; 
-  wrapper->img_in.addr_gen.line_length                  = (params->rows * params->cols)/l1_port_stride;
+  wrapper->img_in.addr_gen.line_length                  = (params->rows * params->cols)/l1_bank_stride;
   wrapper->img_in.addr_gen.feat_stride                  = 0; 
-  wrapper->img_in.addr_gen.feat_length                  = l1_n_buffer_reps * l1_port_stride; 
+  wrapper->img_in.addr_gen.feat_length                  = l1_n_buffer_reps * l1_bank_stride; 
   wrapper->img_in.addr_gen.feat_roll                    = 0; 
   wrapper->img_in.addr_gen.loop_outer                   = 0; 
   wrapper->img_in.addr_gen.realign_type                 = 0; 
-  wrapper->img_in.addr_gen.step                         = 4 * l1_port_stride;
+  wrapper->img_in.addr_gen.step                         = 4 * l1_bank_stride;
 
   // Output image
 
   wrapper->img_out.addr_gen.trans_size                  = params->rows * params->cols;
   wrapper->img_out.addr_gen.line_stride                 = 0; 
-  wrapper->img_out.addr_gen.line_length                 = (params->rows * params->cols)/l1_port_stride; 
+  wrapper->img_out.addr_gen.line_length                 = (params->rows * params->cols)/l1_bank_stride; 
   wrapper->img_out.addr_gen.feat_stride                 = 0; 
-  wrapper->img_out.addr_gen.feat_length                 = l1_n_buffer_reps * l1_port_stride; 
+  wrapper->img_out.addr_gen.feat_length                 = l1_n_buffer_reps * l1_bank_stride; 
   wrapper->img_out.addr_gen.feat_roll                   = 0; 
   wrapper->img_out.addr_gen.loop_outer                  = 0; 
   wrapper->img_out.addr_gen.realign_type                = 0; 
-  wrapper->img_out.addr_gen.step                        = 4 * l1_port_stride;  
+  wrapper->img_out.addr_gen.step                        = 4 * l1_bank_stride;  
 
   // Assign buffer pointers
   wrapper->img_in.tcdm.ptr = (DEVICE_PTR)l1_in_img->ptr; 
@@ -84,25 +84,25 @@ void threshold_cv_pipeline_map_params(
   
   wrapper->img_in.addr_gen.trans_size                   = params->rows * params->cols;
   wrapper->img_in.addr_gen.line_stride                  = 0; 
-  wrapper->img_in.addr_gen.line_length                  = (params->rows * params->cols)/l1_port_stride;
+  wrapper->img_in.addr_gen.line_length                  = (params->rows * params->cols)/l1_bank_stride;
   wrapper->img_in.addr_gen.feat_stride                  = 0; 
-  wrapper->img_in.addr_gen.feat_length                  = l1_n_buffer_reps * l1_port_stride; 
+  wrapper->img_in.addr_gen.feat_length                  = l1_n_buffer_reps * l1_bank_stride; 
   wrapper->img_in.addr_gen.feat_roll                    = 0; 
   wrapper->img_in.addr_gen.loop_outer                   = 0; 
   wrapper->img_in.addr_gen.realign_type                 = 0; 
-  wrapper->img_in.addr_gen.step                         = 4 * l1_port_stride;
+  wrapper->img_in.addr_gen.step                         = 4 * l1_bank_stride;
 
   // Output image
 
   wrapper->img_out.addr_gen.trans_size                  = params->rows * params->cols;
   wrapper->img_out.addr_gen.line_stride                 = 0; 
-  wrapper->img_out.addr_gen.line_length                 = (params->rows * params->cols)/l1_port_stride; 
+  wrapper->img_out.addr_gen.line_length                 = (params->rows * params->cols)/l1_bank_stride; 
   wrapper->img_out.addr_gen.feat_stride                 = 0; 
-  wrapper->img_out.addr_gen.feat_length                 = l1_n_buffer_reps * l1_port_stride; 
+  wrapper->img_out.addr_gen.feat_length                 = l1_n_buffer_reps * l1_bank_stride; 
   wrapper->img_out.addr_gen.feat_roll                   = 0; 
   wrapper->img_out.addr_gen.loop_outer                  = 0; 
   wrapper->img_out.addr_gen.realign_type                = 0; 
-  wrapper->img_out.addr_gen.step                        = 4 * l1_port_stride;  
+  wrapper->img_out.addr_gen.step                        = 4 * l1_bank_stride;  
 
   // Assign buffer pointers
   wrapper->img_in.tcdm.ptr = (DEVICE_PTR)l1_in_img->ptr; 
@@ -137,25 +137,25 @@ void erode_cv_pipeline_map_params(
   
   wrapper->img_in.addr_gen.trans_size                   = params->rows * params->cols;
   wrapper->img_in.addr_gen.line_stride                  = 0; 
-  wrapper->img_in.addr_gen.line_length                  = (params->rows * params->cols)/l1_port_stride;
+  wrapper->img_in.addr_gen.line_length                  = (params->rows * params->cols)/l1_bank_stride;
   wrapper->img_in.addr_gen.feat_stride                  = 0; 
-  wrapper->img_in.addr_gen.feat_length                  = l1_n_buffer_reps * l1_port_stride; 
+  wrapper->img_in.addr_gen.feat_length                  = l1_n_buffer_reps * l1_bank_stride; 
   wrapper->img_in.addr_gen.feat_roll                    = 0; 
   wrapper->img_in.addr_gen.loop_outer                   = 0; 
   wrapper->img_in.addr_gen.realign_type                 = 0; 
-  wrapper->img_in.addr_gen.step                         = 4 * l1_port_stride;
+  wrapper->img_in.addr_gen.step                         = 4 * l1_bank_stride;
 
   // Output image
 
   wrapper->img_out.addr_gen.trans_size                  = params->rows * params->cols;
   wrapper->img_out.addr_gen.line_stride                 = 0; 
-  wrapper->img_out.addr_gen.line_length                 = (params->rows * params->cols)/l1_port_stride;
+  wrapper->img_out.addr_gen.line_length                 = (params->rows * params->cols)/l1_bank_stride;
   wrapper->img_out.addr_gen.feat_stride                 = 0; 
-  wrapper->img_out.addr_gen.feat_length                 = l1_n_buffer_reps * l1_port_stride; 
+  wrapper->img_out.addr_gen.feat_length                 = l1_n_buffer_reps * l1_bank_stride; 
   wrapper->img_out.addr_gen.feat_roll                   = 0; 
   wrapper->img_out.addr_gen.loop_outer                  = 0; 
   wrapper->img_out.addr_gen.realign_type                = 0; 
-  wrapper->img_out.addr_gen.step                        = 4 * l1_port_stride;  
+  wrapper->img_out.addr_gen.step                        = 4 * l1_bank_stride;  
 
   // Assign buffer pointers
   wrapper->img_in.tcdm.ptr = (DEVICE_PTR)l1_in_img->ptr; 
@@ -190,25 +190,25 @@ void dilate_cv_pipeline_map_params(
   
   wrapper->img_in.addr_gen.trans_size                   = params->rows * params->cols;
   wrapper->img_in.addr_gen.line_stride                  = 0; 
-  wrapper->img_in.addr_gen.line_length                  = (params->rows * params->cols)/l1_port_stride;
+  wrapper->img_in.addr_gen.line_length                  = (params->rows * params->cols)/l1_bank_stride;
   wrapper->img_in.addr_gen.feat_stride                  = 0; 
-  wrapper->img_in.addr_gen.feat_length                  = l1_n_buffer_reps * l1_port_stride; 
+  wrapper->img_in.addr_gen.feat_length                  = l1_n_buffer_reps * l1_bank_stride; 
   wrapper->img_in.addr_gen.feat_roll                    = 0; 
   wrapper->img_in.addr_gen.loop_outer                   = 0; 
   wrapper->img_in.addr_gen.realign_type                 = 0; 
-  wrapper->img_in.addr_gen.step                         = 4 * l1_port_stride;
+  wrapper->img_in.addr_gen.step                         = 4 * l1_bank_stride;
 
   // Output image
 
   wrapper->img_out.addr_gen.trans_size                  = params->rows * params->cols;
   wrapper->img_out.addr_gen.line_stride                 = 0; 
-  wrapper->img_out.addr_gen.line_length                 = (params->rows * params->cols)/l1_port_stride;
+  wrapper->img_out.addr_gen.line_length                 = (params->rows * params->cols)/l1_bank_stride;
   wrapper->img_out.addr_gen.feat_stride                 = 0; 
-  wrapper->img_out.addr_gen.feat_length                 = l1_n_buffer_reps * l1_port_stride; 
+  wrapper->img_out.addr_gen.feat_length                 = l1_n_buffer_reps * l1_bank_stride; 
   wrapper->img_out.addr_gen.feat_roll                   = 0; 
   wrapper->img_out.addr_gen.loop_outer                  = 0; 
   wrapper->img_out.addr_gen.realign_type                = 0; 
-  wrapper->img_out.addr_gen.step                        = 4 * l1_port_stride;  
+  wrapper->img_out.addr_gen.step                        = 4 * l1_bank_stride;  
 
   // Assign buffer pointers
   wrapper->img_in.tcdm.ptr = (DEVICE_PTR)l1_in_img->ptr; 
