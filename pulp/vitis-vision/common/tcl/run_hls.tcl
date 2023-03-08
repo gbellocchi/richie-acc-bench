@@ -1,5 +1,5 @@
 #
-# Copyright 2019 Xilinx, Inc.
+# Copyright 2019-2021 Xilinx, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,14 +27,17 @@ open_project -reset $PROJ
 
 # Notes:
 # >> std changed from c++0x to c++14 to silence warnings
-add_files "${CPP_TOP_PATH}" -cflags "-I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -D__SDSVHLS__ -std=c++14" -csimflags "-I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -D__SDSVHLS__ -std=c++14"
-add_files -tb "${CPP_TB_PATH}" -cflags "-I${OPENCV_INCLUDE} -I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -I ${GENHFILE_DIR} -D__SDSVHLS__ -std=c++14" -csimflags "-I${VITIS_LIB_INCLUDE} -I ${CUR_DIR}/build -I ./ -I ${GENHFILE_DIR} -D__SDSVHLS__ -std=c++14"
+add_files "${CPP_TOP_PATH}" -cflags "-I${VITIS_LIB_INCLUDE} -I${VITIS_PATCH_DIR} -I${CUR_DIR}/build -I ./ -D__SDSVHLS__ -std=c++14" -csimflags "-I${VITIS_LIB_INCLUDE} -I${VITIS_PATCH_DIR} -I${CUR_DIR}/build -I ./ -D__SDSVHLS__ -std=c++14"
+add_files -tb "${CPP_TB_PATH}" -cflags "-I${OPENCV_INCLUDE} -I${VITIS_LIB_INCLUDE} -I${VITIS_PATCH_DIR} -I${CUR_DIR}/build -I ./ -I ${GENHFILE_DIR} -D__SDSVHLS__ -std=c++14" -csimflags "-I${VITIS_LIB_INCLUDE} -I${VITIS_PATCH_DIR} -I${CUR_DIR}/build -I ./ -I ${GENHFILE_DIR} -D__SDSVHLS__ -std=c++14"
 set_top ${ACC_NAME}
 
 open_solution -reset $SOLN
 
 set_part $XPART
 create_clock -period $CLKP
+
+# Configure design optimizations
+config_dataflow -default_channel fifo -disable_fifo_sizing_opt
 
 # C simulation
 if {$CSIM} {
