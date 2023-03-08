@@ -56,7 +56,15 @@ if {($COSIM) && !($COSIM_GUI)} {
 
 # Post-synthesis co-simulation (with Vivado GUI)
 if {($COSIM) && ($COSIM_GUI)} {
-  cosim_design -tool xsim -trace_level all -wave_debug -ldflags "-L ${OPENCV_LIB} -lopencv_imgcodecs -lopencv_imgproc -lopencv_core -lopencv_highgui -lopencv_flann -lopencv_features2d" -argv " ${XF_PROJ_ROOT}/data/128x128.png "
+  cosim_design \
+    -tool xsim \
+    -trace_level all \
+    -wave_debug \
+    -random_stall \
+    -enable_dataflow_profiling \
+    -enable_fifo_sizing \
+    -ldflags "-L ${OPENCV_LIB} -lopencv_imgcodecs -lopencv_imgproc -lopencv_core -lopencv_highgui -lopencv_flann -lopencv_features2d" \
+    -argv " ${XF_PROJ_ROOT}/data/128x128.png "
 }
 
 # Vivado synthesis
