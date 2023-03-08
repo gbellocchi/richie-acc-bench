@@ -24,6 +24,16 @@
 namespace xf {
 namespace cv {
 
+/*
+Unpack a AXI video stream into a xf::cv::Mat<> object
+ *input: AXI_video_strm
+ *output: img
+ */
+
+// PATCH_8_3_23: 
+// - Pipeline style set to flp
+// - Removed controls based on start and last. Not necessary in our wrapper, as soon as internal HLS blocks do not require them.
+
 template <int W, int TYPE, int ROWS, int COLS, int NPPC, int XFCVDEPTH>
 int AXIvideo2xfMat_patch(hls::stream<ap_axiu<W, 1, 1, 1> >& AXI_video_strm,
                    xf::cv::Mat<TYPE, ROWS, COLS, NPPC, XFCVDEPTH>& img) {
@@ -39,23 +49,23 @@ int AXIvideo2xfMat_patch(hls::stream<ap_axiu<W, 1, 1, 1> >& AXI_video_strm,
     assert(img.rows <= ROWS);
     assert(img.cols <= COLS);
 
-    bool start = false;
-    bool last = false;
+    // bool start = false;
+    // bool last = false;
 
-loop_start_hunt:
-    while (!start) {
-// clang-format off
-#pragma HLS pipeline II=1
-#pragma HLS loop_tripcount avg=1 max=1
-        // clang-format on
+// loop_start_hunt:
+//     while (!start) {
+// // clang-format off
+// #pragma HLS pipeline II=1
+// #pragma HLS loop_tripcount avg=1 max=1
+//         // clang-format on
 
-        AXI_video_strm >> axi;
-        start = axi.user.to_bool();
-    }
+//         AXI_video_strm >> axi;
+//         start = axi.user.to_bool();
+//     }
 
 loop_row_axi2mat:
     for (int i = 0; i < rows; i++) {
-        last = false;
+        // last = false;
 
     loop_col_zxi2mat:
         for (int j = 0; j < cols; j++) {
@@ -64,36 +74,39 @@ loop_row_axi2mat:
 #pragma HLS pipeline II=1 style=flp
             // clang-format on
 
-            if (start || last) {
-                start = false;
-            } else {
-                AXI_video_strm >> axi;
+            // if (start || last) {
+            //     start = false;
+            // } else {
+            //     AXI_video_strm >> axi;
 
-                bool user = axi.user.to_int();
-                if (user) {
-                    res |= ERROR_IO_SOF_EARLY;
-                }
-            }
-            if (last && (j != img.cols - 1)) { // checking end of each row
-                res |= ERROR_IO_EOL_EARLY;
-            }
+            //     bool user = axi.user.to_int();
+            //     if (user) {
+            //         res |= ERROR_IO_SOF_EARLY;
+            //     }
+            // }
+            // if (last && (j != img.cols - 1)) { // checking end of each row
+            //     res |= ERROR_IO_EOL_EARLY;
+            // }
 
-            last = axi.last.to_bool();
+            // last = axi.last.to_bool();
 
+            // img.write(idx++, axi.data(m_pix_width - 1, 0));
+
+            AXI_video_strm >> axi;
             img.write(idx++, axi.data(m_pix_width - 1, 0));
         }
 
-    loop_last_hunt:
-        while (!last) {
-// clang-format off
-#pragma HLS pipeline II=1
-#pragma HLS loop_tripcount avg=1 max=1
-            // clang-format on
+//     loop_last_hunt:
+//         while (!last) {
+// // clang-format off
+// #pragma HLS pipeline II=1
+// #pragma HLS loop_tripcount avg=1 max=1
+//             // clang-format on
 
-            AXI_video_strm >> axi;
-            last = axi.last.to_bool();
-            res |= ERROR_IO_EOL_LATE;
-        }
+//             AXI_video_strm >> axi;
+//             last = axi.last.to_bool();
+//             res |= ERROR_IO_EOL_LATE;
+//         }
     }
 
     return res;
@@ -104,6 +117,11 @@ loop_row_axi2mat:
  *  input: img
  *  output: AXI_video_strm
  */
+
+// PATCH_8_3_23: 
+// - Pipeline style set to flp
+// - Removed use of sof (start of frame)
+
 template <int W, int TYPE, int ROWS, int COLS, int NPPC, int XFCVDEPTH>
 int xfMat2AXIvideo_patch(xf::cv::Mat<TYPE, ROWS, COLS, NPPC, XFCVDEPTH>& img,
                    hls::stream<ap_axiu<W, 1, 1, 1> >& AXI_video_strm) {
@@ -119,7 +137,7 @@ int xfMat2AXIvideo_patch(xf::cv::Mat<TYPE, ROWS, COLS, NPPC, XFCVDEPTH>& img,
 
     const int m_pix_width = XF_PIXELWIDTH(TYPE, NPPC) * XF_NPIXPERCYCLE(NPPC);
 
-    bool sof = true; // Indicates start of frame
+    // bool sof = true; // Indicates start of frame
 
 loop_row_mat2axi:
     for (int i = 0; i < rows; i++) {
@@ -130,11 +148,13 @@ loop_row_mat2axi:
 #pragma HLS pipeline II=1 style=flp
             // clang-format on
 
-            if (sof) {
-                axi.user = 1;
-            } else {
-                axi.user = 0;
-            }
+            // if (sof) {
+            //     axi.user = 1;
+            // } else {
+            //     axi.user = 0;
+            // }
+
+            // sof = false;
 
             if (j == cols - 1) {
                 axi.last = 1;
@@ -142,13 +162,11 @@ loop_row_mat2axi:
                 axi.last = 0;
             }
 
-            axi.data = 0;
-            axi.data(m_pix_width - 1, 0) = img.read(idx++);
-
             axi.keep = -1;
-            AXI_video_strm << axi;
 
-            sof = false;
+            axi.data = 0;
+            axi.data(m_pix_width - 1, 0) = img.read(i*rows + j);
+            AXI_video_strm.write(axi);
         }
     }
 

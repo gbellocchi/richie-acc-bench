@@ -14,39 +14,42 @@
  * limitations under the License.
  */
 
-#ifndef _XF_COLORDETECT_CONFIG_H_
-#define _XF_COLORDETECT_CONFIG_H_
+#ifndef _XF_THRESHOLD_CONFIG_H_
+#define _XF_THRESHOLD_CONFIG_H_
 
-// Stream<-->Mat conversion (TB)
-#if !defined (__SYNTHESIS__)
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/core/core.hpp"
-#include "opencv2/opencv.hpp"
-#endif
+// Macros
+#define __USE_LIB_PATCH__
 
+// Libraries
 #include "hls_stream.h"
 #include "ap_int.h"
-
 #include "common/xf_common.hpp"
 #include "common/xf_utility.hpp"
-
-// Stream<-->Mat conversion (HLS)
 #include "common/xf_infra.hpp"
-
-#if !defined (__SYNTHESIS__)
-#include "common/xf_axi.hpp"
-#endif
-
-// #include "imgproc/xf_inrange.hpp"
-
-// Application
 #include "imgproc/xf_channel_combine.hpp"
 #include "imgproc/xf_colorthresholding.hpp"
 #include "imgproc/xf_bgr2hsv.hpp"
 #include "imgproc/xf_erosion.hpp"
 #include "imgproc/xf_dilation.hpp"
-//#include "xf_config_params.h"
+#include "xf_config_params.h"
+
+// Library patch
+#if defined (__USE_LIB_PATCH__)
+#include "common/xf_infra_patch.hpp"
+#include "imgproc/xf_colorthresholding_patch.hpp"
+#include "imgproc/xf_bgr2hsv_patch.hpp"
+#include "imgproc/xf_erosion_patch.hpp"
+#include "imgproc/xf_dilation_patch.hpp"
+#endif
+
+// Simulation
+#if !defined (__SYNTHESIS__)
+#include "opencv2/opencv.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/core/core.hpp"
+#include "common/xf_axi.hpp"
+#endif
 
 //#define MAXCOLORS 3
 

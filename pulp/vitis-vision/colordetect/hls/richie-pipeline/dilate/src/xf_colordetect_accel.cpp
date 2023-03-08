@@ -27,11 +27,11 @@ void dilate_cv(
     int cols
 ) {
 
-    #pragma HLS INTERFACE axis register both port=img_in depth=__XF_DEPTH_OUT
-    #pragma HLS INTERFACE axis register both port=img_out depth=__XF_DEPTH_OUT
+    #pragma HLS INTERFACE axis register register_mode=both port=img_in depth=XF_CV_DEPTH_HELP_2
+    #pragma HLS INTERFACE axis register register_mode=both port=img_out depth=XF_CV_DEPTH_HELP_3
 
-    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1> dilate_in(rows, cols);
-    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1> dilate_out(rows, cols);
+    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_HELP_2> dilate_in(rows, cols);
+    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_HELP_3> dilate_out(rows, cols);
 
     // local parameters
     unsigned char low_thresh[FILTER_SIZE*FILTER_SIZE];
@@ -70,16 +70,19 @@ void dilate_cv(
         _kernel[i] = process_shape[i];
     }
 
+    #pragma HLS stream variable=dilate_in.data depth=XF_CV_DEPTH_HELP_2
+    #pragma HLS stream variable=dilate_out.data depth=XF_CV_DEPTH_HELP_3
+
     #pragma HLS DATAFLOW
     
     // Retrieve xf::cv::Mat objects from input stream
-    xf::cv::AXIvideo2xfMat<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(img_in, dilate_in);
+    xf::cv::AXIvideo2xfMat_patch<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_HELP_2>(img_in, dilate_in);
 
     // Use dilate to fully mark color areas
-    xf::cv::dilate<XF_BORDER_CONSTANT, OUT_TYPE, HEIGHT, WIDTH, XF_KERNEL_SHAPE, FILTER_SIZE, FILTER_SIZE, ITERATIONS, NPC1>(dilate_in, dilate_out, _kernel);
+    xf::cv::dilate_patch<XF_BORDER_CONSTANT, OUT_TYPE, HEIGHT, WIDTH, XF_KERNEL_SHAPE, FILTER_SIZE, FILTER_SIZE, ITERATIONS, NPC1, XF_CV_DEPTH_HELP_2, XF_CV_DEPTH_HELP_3>(dilate_in, dilate_out, _kernel);
 
     // Convert _dst xf::cv::Mat object to output stream
-    xf::cv::xfMat2AXIvideo<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(dilate_out, img_out);
+    xf::cv::xfMat2AXIvideo_patch<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_HELP_3>(dilate_out, img_out);
 
     return;
 

@@ -27,11 +27,11 @@ void erode_cv(
     int cols
 ) {
 
-    #pragma HLS INTERFACE axis register both port=img_in depth=__XF_DEPTH_OUT
-    #pragma HLS INTERFACE axis register both port=img_out depth=__XF_DEPTH_OUT
+    #pragma HLS INTERFACE axis register register_mode=both port=img_in depth=XF_CV_DEPTH_HELP_1
+    #pragma HLS INTERFACE axis register register_mode=both port=img_out depth=XF_CV_DEPTH_HELP_2
 
-    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1> erode_in(rows, cols);
-    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1> erode_out(rows, cols);
+    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_HELP_1> erode_in(rows, cols);
+    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_HELP_2> erode_out(rows, cols);
 
     // local parameters
     unsigned char low_thresh[FILTER_SIZE*FILTER_SIZE];
@@ -70,16 +70,19 @@ void erode_cv(
         _kernel[i] = process_shape[i];
     }
 
+    #pragma HLS stream variable=erode_in.data depth=XF_CV_DEPTH_HELP_1
+    #pragma HLS stream variable=erode_out.data depth=XF_CV_DEPTH_HELP_2
+
     #pragma HLS DATAFLOW
     
     // Retrieve xf::cv::Mat objects from input stream
-    xf::cv::AXIvideo2xfMat<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(img_in, erode_in);
+    xf::cv::AXIvideo2xfMat_patch<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_HELP_1>(img_in, erode_in);
 
     // Use erode to fully mark color areas
-    xf::cv::erode<XF_BORDER_CONSTANT, OUT_TYPE, HEIGHT, WIDTH, XF_KERNEL_SHAPE, FILTER_SIZE, FILTER_SIZE, ITERATIONS, NPC1>(erode_in, erode_out, _kernel);
+    xf::cv::erode_patch<XF_BORDER_CONSTANT, OUT_TYPE, HEIGHT, WIDTH, XF_KERNEL_SHAPE, FILTER_SIZE, FILTER_SIZE, ITERATIONS, NPC1, XF_CV_DEPTH_HELP_1, XF_CV_DEPTH_HELP_2>(erode_in, erode_out, _kernel);
 
     // Convert _dst xf::cv::Mat object to output stream
-    xf::cv::xfMat2AXIvideo<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(erode_out, img_out);
+    xf::cv::xfMat2AXIvideo_patch<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_HELP_2>(erode_out, img_out);
 
     return;
 

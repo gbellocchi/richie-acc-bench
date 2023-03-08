@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+// PATCH_8_3_23: 
+// - Pipeline style set to flp
+
 #ifndef _XF_DILATION_PATCH_
 #define _XF_DILATION_PATCH_
 

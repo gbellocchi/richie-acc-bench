@@ -72,8 +72,10 @@ void colordetect_dut_wrapper(cv::Mat& _src, cv::Mat& _dst, int rows, int cols, u
     xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1> _imgHelper4(rows, cols);
     xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1> _imgOutput(rows, cols);
 
+    /* Pipeline */
+
     // Convert Mat to Stream
-    cvMat2AXIvideoxf<NPC1>(_src, stream_dut_in);
+    xf::cv::cvMat2AXIvideoxf<NPC1, INPUT_PTR_WIDTH>(_src, stream_dut_in);
 
     // Execute DUT
     rgb2hsv_cv(
@@ -95,7 +97,7 @@ void colordetect_dut_wrapper(cv::Mat& _src, cv::Mat& _dst, int rows, int cols, u
 
     // Convert from xf::cv::Mat to cv::Mat
     xf::cv::xfMat2AXIvideo<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(_imgOutput, stream_dst);
-    AXIvideo2cvMatxf<NPC1, OUTPUT_PTR_WIDTH>(stream_dst, _dst);
+    xf::cv::AXIvideo2cvMatxf<NPC1, OUTPUT_PTR_WIDTH>(stream_dst, _dst);
 }
 
 /* ===================================================================== */

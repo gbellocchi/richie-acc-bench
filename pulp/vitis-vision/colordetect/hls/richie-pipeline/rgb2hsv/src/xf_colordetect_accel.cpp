@@ -27,11 +27,11 @@ void rgb2hsv_cv(
     int cols
 ) {
 
-    #pragma HLS INTERFACE axis register both port=img_in depth=__XF_DEPTH
-    #pragma HLS INTERFACE axis register both port=img_out depth=__XF_DEPTH
+    #pragma HLS INTERFACE axis register register_mode=both port=img_in depth=XF_CV_DEPTH_IN_1
+    #pragma HLS INTERFACE axis register register_mode=both port=img_out depth=XF_CV_DEPTH_RGB2HSV
 
-    xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1> rgb2hsv_in(rows, cols);
-    xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1> rgb2hsv_out(rows, cols);
+    xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_IN_1> rgb2hsv_in(rows, cols);
+    xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_RGB2HSV> rgb2hsv_out(rows, cols);
 
     // local parameters
     unsigned char low_thresh[FILTER_SIZE*FILTER_SIZE];
@@ -70,16 +70,19 @@ void rgb2hsv_cv(
         _kernel[i] = process_shape[i];
     }
 
+    #pragma HLS stream variable=rgb2hsv_in.data depth=XF_CV_DEPTH_IN_1
+    #pragma HLS stream variable=rgb2hsv_out.data depth=XF_CV_DEPTH_RGB2HSV
+
     #pragma HLS DATAFLOW
     
     // Retrieve xf::cv::Mat objects from input stream
-    xf::cv::AXIvideo2xfMat<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1>(img_in, rgb2hsv_in);
+    xf::cv::AXIvideo2xfMat_patch<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_IN_1>(img_in, rgb2hsv_in);
 
     // Convert RGBA to HSV
-    xf::cv::bgr2hsv<IN_TYPE, HEIGHT, WIDTH, NPC1>(rgb2hsv_in, rgb2hsv_out);
+    xf::cv::bgr2hsv_patch<IN_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_IN_1, XF_CV_DEPTH_RGB2HSV>(rgb2hsv_in, rgb2hsv_out);
 
     // Convert _dst xf::cv::Mat object to output stream
-    xf::cv::xfMat2AXIvideo<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1>(rgb2hsv_out, img_out);
+    xf::cv::xfMat2AXIvideo_patch<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_RGB2HSV>(rgb2hsv_out, img_out);
 
     return;
 

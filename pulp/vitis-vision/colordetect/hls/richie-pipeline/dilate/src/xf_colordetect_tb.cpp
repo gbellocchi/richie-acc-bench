@@ -77,7 +77,7 @@ void colordetect_dut_wrapper(cv::Mat& _src, cv::Mat& _dst, int rows, int cols, u
     xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1> _imgOutput(rows, cols);
 
     // Convert from cv::Mat to xf::cv::Mat
-    cvMat2AXIvideoxf<NPC1>(_src, stream_src);
+    xf::cv::cvMat2AXIvideoxf<NPC1>(_src, stream_src);
     xf::cv::AXIvideo2xfMat<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1>(stream_src, _imgInput);
 
     // Convert RGBA to HSV
@@ -116,7 +116,7 @@ void colordetect_dut_wrapper(cv::Mat& _src, cv::Mat& _dst, int rows, int cols, u
 
     // Convert from xf::cv::Mat to cv::Mat
     xf::cv::xfMat2AXIvideo<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(_imgOutput, stream_dst);
-    AXIvideo2cvMatxf<NPC1, OUTPUT_PTR_WIDTH>(stream_dst, _dst);
+    xf::cv::AXIvideo2cvMatxf<NPC1, OUTPUT_PTR_WIDTH>(stream_dst, _dst);
 }
 
 /* ===================================================================== */

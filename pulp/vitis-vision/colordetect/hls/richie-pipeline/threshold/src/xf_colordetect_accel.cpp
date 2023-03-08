@@ -27,11 +27,11 @@ void threshold_cv(
     int cols
 ) {
 
-    #pragma HLS INTERFACE axis register both port=img_in depth=__XF_DEPTH
-    #pragma HLS INTERFACE axis register both port=img_out depth=__XF_DEPTH_OUT
+    #pragma HLS INTERFACE axis register register_mode=both port=img_in depth=XF_CV_DEPTH_RGB2HSV
+    #pragma HLS INTERFACE axis register register_mode=both port=img_out depth=XF_CV_DEPTH_HELP_1
 
-    xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1> threshold_in(rows, cols);
-    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1> threshold_out(rows, cols);
+    xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_RGB2HSV> threshold_in(rows, cols);
+    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_HELP_1> threshold_out(rows, cols);
 
     // local parameters
     unsigned char low_thresh[FILTER_SIZE*FILTER_SIZE];
@@ -70,16 +70,19 @@ void threshold_cv(
         _kernel[i] = process_shape[i];
     }
 
+    #pragma HLS stream variable=threshold_in.data depth=XF_CV_DEPTH_RGB2HSV
+    #pragma HLS stream variable=threshold_out.data depth=XF_CV_DEPTH_HELP_1
+
     #pragma HLS DATAFLOW
     
     // Retrieve xf::cv::Mat objects from input stream
-    xf::cv::AXIvideo2xfMat<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1>(img_in, threshold_in);
+    xf::cv::AXIvideo2xfMat_patch<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_RGB2HSV>(img_in, threshold_in);
 
     // Do the color thresholding
-    xf::cv::colorthresholding<IN_TYPE, OUT_TYPE, MAXCOLORS, HEIGHT, WIDTH, NPC1>(threshold_in, threshold_out, low_thresh, high_thresh);
+    xf::cv::colorthresholding_patch<IN_TYPE, OUT_TYPE, MAXCOLORS, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_RGB2HSV, XF_CV_DEPTH_HELP_1>(threshold_in, threshold_out, low_thresh, high_thresh);
 
     // Convert _dst xf::cv::Mat object to output stream
-    xf::cv::xfMat2AXIvideo<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(threshold_out, img_out);
+    xf::cv::xfMat2AXIvideo_patch<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_HELP_1>(threshold_out, img_out);
 
     return;
 
