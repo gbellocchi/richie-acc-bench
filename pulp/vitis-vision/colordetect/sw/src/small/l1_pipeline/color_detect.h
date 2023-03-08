@@ -98,9 +98,11 @@ static inline void arov_map_params_color_detect(
     switch (accelerator_id){
 
       case 0: rgb2hsv_cv_pipeline_map_params(&(arov->rgb2hsv_cv_0_0), &_l1_in_img, &_l1_out_img, &params); break;
-      case 1: threshold_cv_pipeline_map_params(&(arov->threshold_cv_0_1), &_l1_in_img, &_l1_out_img, &params); break;
-      case 2: erode_cv_pipeline_map_params(&(arov->erode_cv_0_2), &_l1_in_img, &_l1_out_img, &params); break;
-      case 3: dilate_cv_pipeline_map_params(&(arov->dilate_cv_0_3), &_l1_in_img, &_l1_out_img, &params); break;
+      case 1: rgb2hsv_cv_pipeline_map_params(&(arov->threshold_cv_0_1), &_l1_in_img, &_l1_out_img, &params); break;
+      case 2: rgb2hsv_cv_pipeline_map_params(&(arov->erode_cv_0_2), &_l1_in_img, &_l1_out_img, &params); break;
+      case 3: rgb2hsv_cv_pipeline_map_params(&(arov->dilate_cv_0_3), &_l1_in_img, &_l1_out_img, &params); break;
+      case 4: rgb2hsv_cv_pipeline_map_params(&(arov->dilate_cv_0_4), &_l1_in_img, &_l1_out_img, &params); break;
+      case 5: rgb2hsv_cv_pipeline_map_params(&(arov->erode_cv_0_5), &_l1_in_img, &_l1_out_img, &params); break;
       default: printf("Error: No matching case for <arov_map_params_color_detect>\n"); break;
     }
   }

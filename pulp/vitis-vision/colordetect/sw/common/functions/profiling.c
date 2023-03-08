@@ -12,8 +12,8 @@
  *
  */
 
-#include "experiment.h"
-#include "configs.h"
+#include <experiment.h>
+#include <configs.h>
 
 /* ===================================================================== */
 
@@ -84,7 +84,7 @@ int print_job_stats(
       printf(" # - [Params] N_clusters:             %d \n",           (int32_t)n_clusters);
       printf(" # - [Params] N_acc:                  %d \n",           (int32_t)n_acc_active);
       printf(" # - [Params] DIM_dma_payload:        %d \n",           (int32_t)dma_payload_dim);
-      printf(" # - [Params] DIM_buffer:             %d \n",           (int32_t)l1_buffer_dim);
+      // printf(" # - [Params] DIM_buffer:             %d \n",           (int32_t)l1_buffer_dim);
       printf(" # - [Params] N_l1_banks:             %d \n",           (int32_t)n_l1_banks);
       printf(" # - [Params] N_L2_ports:             %d \n",           (int32_t)n_l2_ports_phy);
 
@@ -139,6 +139,32 @@ int print_job_stats(
   }
 }
 
+/* ============== */
+/*  Print macros  */
+/* ============== */
+
+int print_macros(){
+    // L1
+    // printf(" # - [Params] n_l1_banks:             %d \n",           (int32_t)n_l1_banks);
+    // printf(" # - [Params] l1_bank_stride:         %d \n",           (int32_t)l1_bank_stride);
+    // printf(" # - [Params] l1_n_buffers:           %d \n",           (int32_t)l1_n_buffers);
+    // printf(" # - [Params] l1_buffer_dim:          %d \n",           (int32_t)l1_buffer_dim);
+    // printf(" # - [Params] l1_n_buffer_reps:       %d \n",           (int32_t)l1_n_buffer_reps);
+    // Application
+    // printf(" # - [Params] img_rows:               %d \n",           (int32_t)img_rows);
+    // printf(" # - [Params] img_cols:               %d \n",           (int32_t)img_cols);
+    // printf(" # - [Params] img_tile:               %d \n",           (int32_t)img_tile);
+    // // L2
+    // printf(" # - [Params] l2_n_cl_per_port:       %d \n",           (int32_t)l2_n_cl_per_port);
+    // printf(" # - [Params] l2_n_words_per_port:    %d \n",           (int32_t)l2_n_words_per_port);
+    // printf(" # - [Params] l2_n_buffers:           %d \n",           (int32_t)l2_n_buffers);
+    // printf(" # - [Params] l2_buffer_dim:          %d \n",           (int32_t)l2_buffer_dim);
+    // printf(" # - [Params] l2_n_tiles:             %d \n",           (int32_t)l2_n_tiles);
+    // // DMA
+    // printf(" # - [Params] dma_payload_dim:        %d \n",           (int32_t)dma_payload_dim);
+    // printf(" # - [Params] dma_n_tx:               %d \n",           (int32_t)dma_n_tx);
+}
+
 /* ===================================================================== */
 
 /* =========== */
@@ -153,6 +179,12 @@ int profiling(const int cluster_id, const int core_id)
   icache_stats_init(cluster_id);
 
   if(cluster_id==0 && core_id==0){
+
+    /* Print experiment macros */
+
+    #if defined(PRINT_LOG)
+      print_macros();
+    #endif
 
     /* Initialize performance counters */
 
@@ -286,9 +318,21 @@ int profiling(const int cluster_id, const int core_id)
   }
 
   /* Launch profiling */
+
+  #if defined(_profile_l1_baseline_)
+    run_l1_baseline(cluster_id, core_id);
+  #endif
+
+  #if defined(_profile_l1_pipeline_)
+    run_l1_pipeline(cluster_id, core_id);
+  #endif
   
-  #if defined(_profile_baseline_)
-    run_baseline(cluster_id, core_id);
+  #if defined(_profile_l2_baseline_)
+    run_l2_baseline(cluster_id, core_id);
+  #endif
+
+  #if defined(_profile_l2_pipeline_)
+    run_l2_pipeline(cluster_id, core_id);
   #endif
 
   if(cluster_id==0 && core_id==0){

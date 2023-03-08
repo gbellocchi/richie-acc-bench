@@ -15,54 +15,12 @@
 #ifndef __CONFIGS_H__
 #define __CONFIGS_H__
 
-#define SUM(a, b) ((float)a+b)
-#define DIV(a, b) ((float)a/b)
-#define ROUND_UP(N, S) (((((int)N) + ((int)S) - 1) / ((int)S)) * ((int)S))
-#define ROUND_DOWN(N,S) (((int)N / (int)S) * (int)S)
-
 /* =====================================================================
  * DSE parameters --> Application
  * ===================================================================== */
 
 // Application version
-#define _profile_baseline_
-
-// Application optimizations
-// #define l2_pipelining
-// #define l1_pipelining
-// #define l2_double_buffering
-// #define l1_double_buffering
-
-/* =====================================================================
- * DSE parameters --> L1
- * ===================================================================== */
-
-// - L1
-#define l1_size_B                           128*1024 // bytes, real dimension
-#define l1_size_B_emulated                  256*1024 // bytes, emulated dimension (>=l1_size_B, must be a power of 2)
-#define n_l1_banks                          4
-#define l1_bank_stride                      1 // to emulate small port utilization (can also be done in HW reducing the number of ports)
-
-// - L1 number of buffers (This depends on the type of optimization being adopted, e.g. pipelining, double buffering)
-#ifndef l1_pipelining
-#define l1_n_buffers                        2
-#else
-#ifndef l1_double_buffering
-#define l1_n_buffers                        n_acc_stages+1
-#else
-#define l1_n_buffers                        2*(n_acc_stages+1)
-#endif
-#endif
-
-// - L1 image buffer
-#define l1_buffer_dim                       ((int) (l1_size_B) / (4 * l1_n_buffers)) // Dimension of allocated buffer
-                                    // This is also the dimension of the data tile executed by each processing stage of the cluster
-                                    // Data are read row-by-row, so they can sequentialized with 1D DMA transfers
-#define l1_n_buffer_reps                    ((img_dim == img_tile) ? 1 : ((int) (l1_size_B_emulated) / (l1_size_B))) // Number of repetitions of L1 buffer  
-                                    // This parameter is used to emulate bigger L1 memory by:
-                                        // 1. Looping the HWPE streamer over the same L1 buffer
-                                        // 2. Looping the DMA over the same L1 buffer
-                                        // 3. Affecting the dimensioning of the L2 data tile
+#define _profile_l1_pipeline_
 
 /* =====================================================================
  * DSE parameters --> System
@@ -72,18 +30,41 @@
 #define n_clusters                          1
 
 // Accelerator-rich
-#define n_acc_total                         4
+#define n_acc_total                         6
 #define n_acc_active                        n_acc_total
 #define n_acc_stages                        6 // Total number of processing stages
 
 // Application
 #define n_img                               4 // Number of input images to be processed
-#define img_rows                            128 
-#define img_cols                            128 
-#define img_dim                             img_rows*img_cols // SMALL: 128x128, FHD: 1920x1080, 4K: 3840x2160
-#define img_tile                            ((l1_buffer_dim >= img_dim) ? (img_dim) : (l1_buffer_dim))
-#define img_rows_min                        128
-#define img_cols_min                        128
+#define img_rows                            64 
+#define img_cols                            64 
+#define img_dim                             img_rows * img_cols
+
+/* =====================================================================
+ * DSE parameters --> L1
+ * ===================================================================== */
+
+// - L1
+#define l1_size_B                           128*1024 // bytes, real dimension
+#define l1_size_B_emulated                  256*1024 // bytes, emulated dimension (>=l1_size_B, must be a power of 2)
+#define n_l1_banks                          4
+#define l1_bank_stride                      4 // to emulate small port utilization (can also be done in HW reducing the number of ports)
+
+// L1 stored image tile
+#define l1_img_rows                         64
+#define l1_img_cols                         64
+#define l1_n_buffer_reps                    2
+
+// - L1 number of buffers (This depends on the type of optimization being adopted, e.g. pipelining, double buffering)
+// #define l1_n_buffers                        16
+
+// - L1 image buffer
+// #define l1_buffer_dim                       ((int) (l1_size_B) / (4 * l1_n_buffers)) // Dimension of allocated buffer
+                                    // This is also the dimension of the data tile executed by each processing stage of the cluster
+                                    // Data are read row-by-row, so they can sequentialized with 1D DMA transfers
+
+// - Image tiling
+#define img_tile                            ((int) (l1_size_B) / (4 * 16))
 
 /* =====================================================================
  * DSE parameters --> L2
@@ -101,15 +82,7 @@
 #define l2_n_words_per_port                 ((int) (l2_n_bytes_per_port) / (sizeof(uint32_t)))
 
 // - L2 number of buffers (This depends on the type of optimization being adopted, e.g. pipelining, double buffering)
-#ifndef l2_pipelining
-#define l2_n_buffers                        2
-#else
-#ifndef l2_double_buffering
-#define l2_n_buffers                        n_acc_stages+1
-#else
-#define l2_n_buffers                        2*(n_acc_stages+1)
-#endif
-#endif
+#define l2_n_buffers                        2 * (n_acc_stages + 1)
 
 // - L2 image buffer
 #define l2_buffer_dim                       img_tile // Equals dimension of tile passed to L1 memory
@@ -121,7 +94,7 @@
 
 // - DMA 
 #define dma_payload_dim                     img_tile // Payload dimension
-#define dma_n_tx                            l1_n_buffer_reps // Number of transfers (for one outer transfer)
+#define dma_n_tx                            0 // Number of transfers (for one outer transfer)  
 
 // Event unit
 #define max_num_sw_evt                      8
@@ -154,7 +127,7 @@
 
 /* Other macros */
 
-#define PRINT_LOG
+// #define PRINT_LOG
 // #define DEBUG_SYNCH_EU
 // #define INPUT_INIT
 

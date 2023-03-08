@@ -1,12 +1,12 @@
 /* =====================================================================
  * Project:      System model
- * Title:        experiment.h
- * Description:  Multi cluster scaling
+ * Title:        benchmarks.h
+ * Description:  Color detect benchmarks.
  *
- * $Date:        17.7.2022
+ * $Date:        24.2.2023
  * ===================================================================== */
 /*
- * Copyright (C) 2022 University of Modena and Reggio Emilia.
+ * Copyright (C) 2023 University of Modena and Reggio Emilia.
  *
  * Author: Gianluca Bellocchi, University of Modena and Reggio Emilia.
  *
@@ -26,15 +26,6 @@
 #include <math.h>
 #include <time.h>
 #include <errno.h>
-
-/* IO images (OpenCV). */
-
-typedef struct {
-  int w;
-  int h;
-  int c;
-  float *data;
-} image;
 
 /* System. */
 
