@@ -1,6 +1,6 @@
 /* =====================================================================
  * Project:      Color detect
- * Title:        run_l1_pipeline.c
+ * Title:        run_l2_pipeline.c
  * Description:  Color detect benchmarks.
  *
  * $Date:        24.2.2023
@@ -14,14 +14,14 @@
 
 #include <configs.h>
 
-#ifdef _profile_l1_pipeline_
+#ifdef _profile_l2_pipeline_
 
 #include <experiment.h>
 #include <cluster_synch.h>
 
 #include <stimuli.h>
 
-void run_l1_pipeline(const int cluster_id, const int core_id) {
+void run_l2_pipeline(const int cluster_id, const int core_id) {
 
   /* Runtime IDs */
 
@@ -39,6 +39,35 @@ void run_l1_pipeline(const int cluster_id, const int core_id) {
 
   /* ===================================================================== */
 
+  /* Initialize L2 memory */
+
+  // Parameters
+  unsigned l2_cl_port_id = cluster_id/(l2_n_cl_per_port + l2_cl_port_id_offset); // Calculate port ID (Optional: L2 cluster port offset)
+
+  // Declare L2 cluster base address  
+  DEVICE_PTR_CONST l2_cl_base = (l2_cl_port_id==0) ? \
+                                  arov_l2_heap() : \
+                                    // bank 0 holds also the program, so buffers are allocated starting from the heap
+                                  arov_l2_base() + l2_cl_port_id * l2_n_bytes_per_port;
+                                    // same as the HW of the SoC bus 
+
+  // Declare L2 cluster buffer address  
+  DEVICE_PTR_CONST l2_cl_addr = l2_cl_base + (cluster_id - (l2_cl_port_id - l2_cl_port_id_offset) * l2_n_cl_per_port) * dma_payload_dim;
+
+  // Declare L2 image buffers
+  DEVICE_PTR l2_img[l2_n_buffers];
+
+  for(int i_buffer=0; i_buffer<l2_n_buffers; i_buffer++){
+    l2_img[i_buffer] = (!i_buffer) ? l2_cl_addr : l2_cl_addr + i_buffer * l2_buffer_dim;
+  }
+
+  #ifdef INPUT_INIT
+    // Initialize input buffer with input image
+    for(int i=0; i<l2_buffer_dim; i++) pulp_write32(l2_img_a+i*sizeof(int32_t), in_img_small[i]);
+  #endif
+
+  /* ===================================================================== */
+
   /* Initialize L1 memory */
 
   // Declare L1 image buffers
@@ -52,7 +81,7 @@ void run_l1_pipeline(const int cluster_id, const int core_id) {
 
   /* System */
 
-  pulp_dma_struct dma_in[n_acc_active], dma_out[n_acc_active], dma_wait[n_acc_active];
+  pulp_dma_struct dma_in[2], dma_out[2], dma_wait[2];
 
   /* Accelerators */
 
@@ -246,7 +275,18 @@ void run_l1_pipeline(const int cluster_id, const int core_id) {
         }
       }
 
-      /* Run pipeline stages */
+      /* Transfer input tile from L2 */
+      
+      for (int i = 0; i < dma_n_tx; i++) {
+        // Launch transactions
+        dma_in[sel_id].job = hero_memcpy_host2dev_async(l1_img[sel_id], l2_img[sel_id], dma_payload_dim * sizeof(uint32_t));
+
+        // Wait DMAs from previous round
+        if(run_id>0) hero_dma_wait(dma_in[!sel_id].job);
+        // if(run_id>0) hero_dma_wait(dma_out[!sel_id].job); // use when we'll have bi-directional DMA
+      }
+
+      /* Wait for DMA, then run pipeline stages */
 
       arov_compute(&arov, cluster_id, RGB2HSV_CV_0_0); 
       arov_compute(&arov, cluster_id, THRESHOLD_CV_0_1);
@@ -254,7 +294,21 @@ void run_l1_pipeline(const int cluster_id, const int core_id) {
       arov_compute(&arov, cluster_id, DILATE_CV_0_3);
       arov_compute(&arov, cluster_id, DILATE_CV_0_4);
       arov_compute(&arov, cluster_id, ERODE_CV_0_5);
-      
+
+      /* Wait for final stage, then transfer output tile to L2 */
+
+      while(!arov_is_finished(&arov, cluster_id, ERODE_CV_0_5)){
+        arov_wait_eu(&arov, cluster_id, ERODE_CV_0_5);
+      }
+
+      for (int i = 0; i < dma_n_tx; i++) {
+        // Launch transactions (only programming because DMA is currently not bi-directional)
+        if((run_id>0)&&(run_id%2))
+          dma_out[sel_id].job = hero_memcpy_dev2host_async_no_trigger(l2_img[12], l1_img[12], dma_payload_dim * sizeof(uint32_t));
+        else
+          dma_out[sel_id].job = hero_memcpy_dev2host_async_no_trigger(l2_img[13], l1_img[13], dma_payload_dim * sizeof(uint32_t));
+      }
+
       /* Wait for pipeline stages */
       
       while(!arov_is_finished(&arov, cluster_id, RGB2HSV_CV_0_0)){
@@ -272,10 +326,7 @@ void run_l1_pipeline(const int cluster_id, const int core_id) {
       while(!arov_is_finished(&arov, cluster_id, DILATE_CV_0_4)){
         arov_wait_eu(&arov, cluster_id, DILATE_CV_0_4);
       }
-      while(!arov_is_finished(&arov, cluster_id, ERODE_CV_0_5)){
-        arov_wait_eu(&arov, cluster_id, ERODE_CV_0_5);
-      }
-
+      
     } // n_img
 
     /* ===================================================================== */
@@ -307,7 +358,7 @@ void run_l1_pipeline(const int cluster_id, const int core_id) {
       // Experiment
       0, 
       job_id, 
-      "run_l1_pipeline", 
+      "run_l2_pipeline", 
       // Cache
       &reg_hit,
       &reg_trns, 

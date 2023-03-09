@@ -85,7 +85,7 @@ int print_job_stats(
       printf(" # - [Params] N_acc:                  %d \n",           (int32_t)n_acc_active);
       printf(" # - [Params] DIM_dma_payload:        %d \n",           (int32_t)dma_payload_dim);
       // printf(" # - [Params] DIM_buffer:             %d \n",           (int32_t)l1_buffer_dim);
-      printf(" # - [Params] N_l1_banks:             %d \n",           (int32_t)n_l1_banks);
+      // printf(" # - [Params] N_l1_ports:             %d \n",           (int32_t)n_l1_ports);
       printf(" # - [Params] N_L2_ports:             %d \n",           (int32_t)n_l2_ports_phy);
 
     printf(" #\n");
@@ -145,24 +145,23 @@ int print_job_stats(
 
 int print_macros(){
     // L1
-    // printf(" # - [Params] n_l1_banks:             %d \n",           (int32_t)n_l1_banks);
-    // printf(" # - [Params] l1_bank_stride:         %d \n",           (int32_t)l1_bank_stride);
-    // printf(" # - [Params] l1_n_buffers:           %d \n",           (int32_t)l1_n_buffers);
-    // printf(" # - [Params] l1_buffer_dim:          %d \n",           (int32_t)l1_buffer_dim);
-    // printf(" # - [Params] l1_n_buffer_reps:       %d \n",           (int32_t)l1_n_buffer_reps);
+    printf(" # - [Params] n_l1_ports:             %d \n",           (int32_t)n_l1_ports);
+    printf(" # - [Params] l1_bank_stride:         %d \n",           (int32_t)l1_bank_stride);
+    printf(" # - [Params] l1_n_buffers:           %d \n",           (int32_t)l1_n_buffers);
+    printf(" # - [Params] l1_buffer_dim:          %d \n",           (int32_t)l1_buffer_dim);
+    printf(" # - [Params] l1_n_buffer_reps:       %d \n",           (int32_t)l1_n_buffer_reps);
     // Application
-    // printf(" # - [Params] img_rows:               %d \n",           (int32_t)img_rows);
-    // printf(" # - [Params] img_cols:               %d \n",           (int32_t)img_cols);
-    // printf(" # - [Params] img_tile:               %d \n",           (int32_t)img_tile);
-    // // L2
-    // printf(" # - [Params] l2_n_cl_per_port:       %d \n",           (int32_t)l2_n_cl_per_port);
-    // printf(" # - [Params] l2_n_words_per_port:    %d \n",           (int32_t)l2_n_words_per_port);
-    // printf(" # - [Params] l2_n_buffers:           %d \n",           (int32_t)l2_n_buffers);
-    // printf(" # - [Params] l2_buffer_dim:          %d \n",           (int32_t)l2_buffer_dim);
-    // printf(" # - [Params] l2_n_tiles:             %d \n",           (int32_t)l2_n_tiles);
-    // // DMA
-    // printf(" # - [Params] dma_payload_dim:        %d \n",           (int32_t)dma_payload_dim);
-    // printf(" # - [Params] dma_n_tx:               %d \n",           (int32_t)dma_n_tx);
+    printf(" # - [Params] img_rows:               %d \n",           (int32_t)img_rows);
+    printf(" # - [Params] img_cols:               %d \n",           (int32_t)img_cols);
+    // L2
+    printf(" # - [Params] l2_n_cl_per_port:       %d \n",           (int32_t)l2_n_cl_per_port);
+    printf(" # - [Params] l2_n_words_per_port:    %d \n",           (int32_t)l2_n_words_per_port);
+    printf(" # - [Params] l2_n_buffers:           %d \n",           (int32_t)l2_n_buffers);
+    printf(" # - [Params] l2_buffer_dim:          %d \n",           (int32_t)l2_buffer_dim);
+    printf(" # - [Params] l2_n_tiles:             %d \n",           (int32_t)l2_n_tiles);
+    // DMA
+    printf(" # - [Params] dma_payload_dim:        %d \n",           (int32_t)dma_payload_dim);
+    printf(" # - [Params] dma_n_tx:               %d \n",           (int32_t)dma_n_tx);
 }
 
 /* ===================================================================== */

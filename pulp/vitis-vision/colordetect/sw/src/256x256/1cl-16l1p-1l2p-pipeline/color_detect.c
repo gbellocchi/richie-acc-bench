@@ -22,34 +22,33 @@
 void rgb2hsv_cv_pipeline_map_params(
   rgb2hsv_cv_wrapper_struct *wrapper,
   hwpe_l1_ptr_struct *l1_in_img,  
-  hwpe_l1_ptr_struct *l1_out_img, 
-  hwpe_color_detect_workload_params *params) 
+  hwpe_l1_ptr_struct *l1_out_img) 
 {
   /* Streamer */
 
   // Input image
   
-  wrapper->img_in.addr_gen.trans_size                   = 128 * 128;
+  wrapper->img_in.addr_gen.trans_size                   = l1_img_rows * l1_img_cols;
   wrapper->img_in.addr_gen.line_stride                  = 0; 
-  wrapper->img_in.addr_gen.line_length                  = (128 * 128)/(16);
+  wrapper->img_in.addr_gen.line_length                  = (l1_img_rows * l1_img_cols)/(l1_n_buffer_reps * l1_bank_stride);
   wrapper->img_in.addr_gen.feat_stride                  = 0; 
-  wrapper->img_in.addr_gen.feat_length                  = 16; 
+  wrapper->img_in.addr_gen.feat_length                  = l1_n_buffer_reps * l1_bank_stride; 
   wrapper->img_in.addr_gen.feat_roll                    = 0; 
   wrapper->img_in.addr_gen.loop_outer                   = 0; 
   wrapper->img_in.addr_gen.realign_type                 = 0; 
-  wrapper->img_in.addr_gen.step                         = 4;
+  wrapper->img_in.addr_gen.step                         = 4 * l1_bank_stride;
 
   // Output image
 
-  wrapper->img_out.addr_gen.trans_size                  = 128 * 128;
+  wrapper->img_out.addr_gen.trans_size                  = l1_img_rows * l1_img_cols;
   wrapper->img_out.addr_gen.line_stride                 = 0; 
-  wrapper->img_out.addr_gen.line_length                 = (128 * 128)/(16); 
+  wrapper->img_out.addr_gen.line_length                 = (l1_img_rows * l1_img_cols)/(l1_n_buffer_reps * l1_bank_stride); 
   wrapper->img_out.addr_gen.feat_stride                 = 0; 
-  wrapper->img_out.addr_gen.feat_length                 = 16; 
+  wrapper->img_out.addr_gen.feat_length                 = l1_n_buffer_reps * l1_bank_stride; 
   wrapper->img_out.addr_gen.feat_roll                   = 0; 
   wrapper->img_out.addr_gen.loop_outer                  = 0; 
   wrapper->img_out.addr_gen.realign_type                = 0; 
-  wrapper->img_out.addr_gen.step                        = 4;  
+  wrapper->img_out.addr_gen.step                        = 4 * l1_bank_stride;  
 
   // Assign buffer pointers
   wrapper->img_in.tcdm.ptr = (DEVICE_PTR)l1_in_img->ptr; 
@@ -58,14 +57,14 @@ void rgb2hsv_cv_pipeline_map_params(
   /* Controller */
 
   // Engine
-  wrapper->ctrl.engine.packet_size_img_in                 = 128;
+  wrapper->ctrl.engine.packet_size_img_in                 = l1_img_cols;
 
   // FSM
   wrapper->ctrl.fsm.n_engine_runs                         = 1;
 
   // Custom registers
-  wrapper->ctrl.custom_regs.rows                          = 128;
-  wrapper->ctrl.custom_regs.cols                          = 128; 
+  wrapper->ctrl.custom_regs.rows                          = l1_img_rows;
+  wrapper->ctrl.custom_regs.cols                          = l1_img_cols;  
 }
 
 /* =====================================================================
@@ -75,34 +74,33 @@ void rgb2hsv_cv_pipeline_map_params(
 void threshold_cv_pipeline_map_params(
   threshold_cv_wrapper_struct *wrapper,
   hwpe_l1_ptr_struct *l1_in_img,  
-  hwpe_l1_ptr_struct *l1_out_img, 
-  hwpe_color_detect_workload_params *params) 
+  hwpe_l1_ptr_struct *l1_out_img) 
 {
   /* Streamer */
 
   // Input image
   
-  wrapper->img_in.addr_gen.trans_size                   = 128 * 128;
+  wrapper->img_in.addr_gen.trans_size                   = l1_img_rows * l1_img_cols;
   wrapper->img_in.addr_gen.line_stride                  = 0; 
-  wrapper->img_in.addr_gen.line_length                  = (128 * 128)/(16 * 1);
+  wrapper->img_in.addr_gen.line_length                  = (l1_img_rows * l1_img_cols)/(l1_n_buffer_reps * l1_bank_stride);
   wrapper->img_in.addr_gen.feat_stride                  = 0; 
-  wrapper->img_in.addr_gen.feat_length                  = 16 * 1; 
+  wrapper->img_in.addr_gen.feat_length                  = l1_n_buffer_reps * l1_bank_stride; 
   wrapper->img_in.addr_gen.feat_roll                    = 0; 
   wrapper->img_in.addr_gen.loop_outer                   = 0; 
   wrapper->img_in.addr_gen.realign_type                 = 0; 
-  wrapper->img_in.addr_gen.step                         = 4 * 1;
+  wrapper->img_in.addr_gen.step                         = 4 * l1_bank_stride;
 
   // Output image
 
-  wrapper->img_out.addr_gen.trans_size                  = 128 * 128;
+  wrapper->img_out.addr_gen.trans_size                  = l1_img_rows * l1_img_cols;
   wrapper->img_out.addr_gen.line_stride                 = 0; 
-  wrapper->img_out.addr_gen.line_length                 = (128 * 128)/(16 * 1); 
+  wrapper->img_out.addr_gen.line_length                 = (l1_img_rows * l1_img_cols)/(l1_n_buffer_reps * l1_bank_stride); 
   wrapper->img_out.addr_gen.feat_stride                 = 0; 
-  wrapper->img_out.addr_gen.feat_length                 = 16 * 1; 
+  wrapper->img_out.addr_gen.feat_length                 = l1_n_buffer_reps * l1_bank_stride; 
   wrapper->img_out.addr_gen.feat_roll                   = 0; 
   wrapper->img_out.addr_gen.loop_outer                  = 0; 
   wrapper->img_out.addr_gen.realign_type                = 0; 
-  wrapper->img_out.addr_gen.step                        = 4 * 1; 
+  wrapper->img_out.addr_gen.step                        = 4 * l1_bank_stride;  
 
   // Assign buffer pointers
   wrapper->img_in.tcdm.ptr = (DEVICE_PTR)l1_in_img->ptr; 
@@ -111,14 +109,14 @@ void threshold_cv_pipeline_map_params(
   /* Controller */
 
   // Engine
-  wrapper->ctrl.engine.packet_size_img_in                 = 128;
+  wrapper->ctrl.engine.packet_size_img_in                 = l1_img_cols;
 
   // FSM
   wrapper->ctrl.fsm.n_engine_runs                         = 1;
 
   // Custom registers
-  wrapper->ctrl.custom_regs.rows                          = 128;
-  wrapper->ctrl.custom_regs.cols                          = 128; 
+  wrapper->ctrl.custom_regs.rows                          = l1_img_rows;
+  wrapper->ctrl.custom_regs.cols                          = l1_img_cols; 
 }
 
 /* =====================================================================
@@ -128,8 +126,7 @@ void threshold_cv_pipeline_map_params(
 void erode_cv_pipeline_map_params(
   erode_cv_wrapper_struct *wrapper,
   hwpe_l1_ptr_struct *l1_in_img,  
-  hwpe_l1_ptr_struct *l1_out_img, 
-  hwpe_color_detect_workload_params *params) 
+  hwpe_l1_ptr_struct *l1_out_img) 
 {
   /* Streamer */
 
@@ -181,8 +178,7 @@ void erode_cv_pipeline_map_params(
 void dilate_cv_pipeline_map_params(
   dilate_cv_wrapper_struct *wrapper,
   hwpe_l1_ptr_struct *l1_in_img,  
-  hwpe_l1_ptr_struct *l1_out_img, 
-  hwpe_color_detect_workload_params *params) 
+  hwpe_l1_ptr_struct *l1_out_img)
 {
   /* Streamer */
 

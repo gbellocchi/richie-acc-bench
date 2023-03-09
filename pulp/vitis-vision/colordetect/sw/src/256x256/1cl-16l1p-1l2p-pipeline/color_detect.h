@@ -35,26 +35,26 @@ typedef struct {
 void rgb2hsv_cv_pipeline_map_params(
   rgb2hsv_cv_wrapper_struct *wrapper,
   hwpe_l1_ptr_struct *l1_in_img,  
-  hwpe_l1_ptr_struct *l1_out_img, 
-  hwpe_color_detect_workload_params *params);
+  hwpe_l1_ptr_struct *l1_out_img
+);
 
 void threshold_cv_pipeline_map_params(
   threshold_cv_wrapper_struct *wrapper,
   hwpe_l1_ptr_struct *l1_in_img,  
-  hwpe_l1_ptr_struct *l1_out_img, 
-  hwpe_color_detect_workload_params *params);
+  hwpe_l1_ptr_struct *l1_out_img
+);
 
 void erode_cv_pipeline_map_params(
   erode_cv_wrapper_struct *wrapper,
   hwpe_l1_ptr_struct *l1_in_img,  
-  hwpe_l1_ptr_struct *l1_out_img, 
-  hwpe_color_detect_workload_params *params);
+  hwpe_l1_ptr_struct *l1_out_img
+);
 
 void dilate_cv_pipeline_map_params(
   dilate_cv_wrapper_struct *wrapper,
   hwpe_l1_ptr_struct *l1_in_img,  
-  hwpe_l1_ptr_struct *l1_out_img, 
-  hwpe_color_detect_workload_params *params);
+  hwpe_l1_ptr_struct *l1_out_img
+);
 
 static inline void arov_map_params_color_detect(
   // Accelerator-rich overlay
@@ -65,18 +65,8 @@ static inline void arov_map_params_color_detect(
   // L1 accelerator image buffers
   DEVICE_PTR_CONST l1_in_img,
   DEVICE_PTR_CONST l1_out_img,
-  uint32_t dim_img_buffer,
-  // Workload paramaters
-  uint32_t rows, 
-  uint32_t cols
-  ) { 
-
-  /* Define parameters */
-
-  hwpe_color_detect_workload_params params;
-
-  params.rows = rows; 
-  params.cols = cols; 
+  uint32_t dim_img_buffer) 
+{ 
 
   /* L1 buffers */
 
@@ -97,12 +87,12 @@ static inline void arov_map_params_color_detect(
   if(cluster_id == 0){
     switch (accelerator_id){
 
-      case 0: rgb2hsv_cv_pipeline_map_params(&(arov->rgb2hsv_cv_0_0), &_l1_in_img, &_l1_out_img, &params); break;
-      case 1: rgb2hsv_cv_pipeline_map_params(&(arov->threshold_cv_0_1), &_l1_in_img, &_l1_out_img, &params); break;
-      case 2: rgb2hsv_cv_pipeline_map_params(&(arov->erode_cv_0_2), &_l1_in_img, &_l1_out_img, &params); break;
-      case 3: rgb2hsv_cv_pipeline_map_params(&(arov->dilate_cv_0_3), &_l1_in_img, &_l1_out_img, &params); break;
-      case 4: rgb2hsv_cv_pipeline_map_params(&(arov->dilate_cv_0_4), &_l1_in_img, &_l1_out_img, &params); break;
-      case 5: rgb2hsv_cv_pipeline_map_params(&(arov->erode_cv_0_5), &_l1_in_img, &_l1_out_img, &params); break;
+      case 0: rgb2hsv_cv_pipeline_map_params(&(arov->rgb2hsv_cv_0_0), &_l1_in_img, &_l1_out_img); break;
+      case 1: threshold_cv_pipeline_map_params(&(arov->threshold_cv_0_1), &_l1_in_img, &_l1_out_img); break;
+      case 2: erode_cv_pipeline_map_params(&(arov->erode_cv_0_2), &_l1_in_img, &_l1_out_img); break;
+      case 3: dilate_cv_pipeline_map_params(&(arov->dilate_cv_0_3), &_l1_in_img, &_l1_out_img); break;
+      case 4: dilate_cv_pipeline_map_params(&(arov->dilate_cv_0_4), &_l1_in_img, &_l1_out_img); break;
+      case 5: erode_cv_pipeline_map_params(&(arov->erode_cv_0_5), &_l1_in_img, &_l1_out_img); break;
       default: printf("Error: No matching case for <arov_map_params_color_detect>\n"); break;
     }
   }
