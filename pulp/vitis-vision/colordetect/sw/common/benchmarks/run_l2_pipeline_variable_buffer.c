@@ -1,7 +1,13 @@
 /* =====================================================================
  * Project:      Color detect
- * Title:        run_l2_pipeline.c
- * Description:  Color detect benchmarks.
+ * Title:        run_l2_pipeline_variable_buffer.c
+ * Description:  Implementation of an accelerator-rich vision pipeline 
+ *               in a PULP cluster. Each accelerator is given a different
+ *               buffer, hence spreading accelerators in different clusters
+ *               and keeping a constant overall L1 dimension will improve 
+ *               performance since buffer dimension will increase. Thus, the
+ *               tile dimension will increase as well and less DMA transactions
+ *               will be required, hence less programming overhead.
  *
  * $Date:        24.2.2023
  * ===================================================================== */
@@ -14,7 +20,7 @@
 
 #include <configs.h>
 
-#ifdef _profile_l2_pipeline_
+#if ((n_clusters) == 1) && defined(_profile_l2_pipeline_) && defined(_implement_variable_multi_buffer_) 
 
 #include <experiment.h>
 #include <cluster_synch.h>
@@ -98,8 +104,8 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
 
   /* Cluster steady state condition */
   
-  cluster_barrier_eu_soc_evt(cluster_id, 0);
-  if(!cluster_id) cluster_slv_restart_eu_soc_evt(cluster_id, 0);
+  cluster_barrier_all_eu_soc_evt(cluster_id, 0);
+  if(!cluster_id) cluster_slv_all_restart_eu_soc_evt(cluster_id, 0);
 
   /* ===================================================================== */
 
@@ -141,14 +147,14 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
     start_measurement(cluster_id, core_id, hit, trns, miss);
 
     // Cluster synchronization barrier
-    cluster_barrier_eu_soc_evt(cluster_id, 0);
+    cluster_barrier_all_eu_soc_evt(cluster_id, 0);
 
     // Cluster timer
     if(!cluster_id) t_experiment_sys_pov.cnt_0 = hero_get_clk_counter();
 
     // Activate clusters simultaneously
     // NB: Activation must be after the starting of time measurements
-    if(!cluster_id) cluster_slv_restart_eu_soc_evt(cluster_id, 0);
+    if(!cluster_id) cluster_slv_all_restart_eu_soc_evt(cluster_id, 0);
 
     /* ===================================================================== */
 
@@ -334,7 +340,7 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
     /* MEASUREMENT - END */
 
     // Cluster synchronization barrier
-    cluster_barrier_eu_soc_evt(cluster_id, 0);
+    cluster_barrier_all_eu_soc_evt(cluster_id, 0);
 
     // Cluster timer
     if(!cluster_id) t_experiment_sys_pov.cnt_1 = hero_get_clk_counter();
@@ -370,7 +376,7 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
 
     /* Restart clusters */
 
-    if(!cluster_id) cluster_slv_restart_eu_soc_evt(cluster_id, 0);
+    if(!cluster_id) cluster_slv_all_restart_eu_soc_evt(cluster_id, 0);
 
   } // job_id
 
