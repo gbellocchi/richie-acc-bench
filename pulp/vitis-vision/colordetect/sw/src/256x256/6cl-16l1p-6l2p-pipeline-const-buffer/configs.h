@@ -95,13 +95,13 @@
  * ===================================================================== */
 
 // - L2
-#define l2_size_B                           4*1024*1024 // bytes
-#define n_l2_ports_phy                      1
-#define n_l2_ports_virt                     1 // <= n_l2_ports_phy
+#define l2_size_B                           8*1024*1024 // bytes
+#define n_l2_ports_phy                      16
+#define n_l2_ports_virt                     16 // <= n_l2_ports_phy
 #define l2_cl_port_id_offset                0 // Offset on L2 port starting from port 0 (optional, default: 0)
 
 // - L2 multi-port
-#define l2_n_cl_per_port                    ((int) (n_clusters) / (n_l2_ports_virt))
+#define l2_n_cl_per_port                    1 // (int) (n_clusters) / (n_l2_ports_virt))
 #define l2_n_bytes_per_port                 ((int) (l2_size_B) / (n_l2_ports_phy))
 #define l2_n_words_per_port                 ((int) (l2_n_bytes_per_port) / (sizeof(uint32_t)))
 
