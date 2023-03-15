@@ -384,7 +384,7 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
 
 #endif
 
-// #if ((n_clusters) > 1) && defined(_profile_l2_pipeline_) && defined(_implement_const_single_buffer_) 
+#if ((n_clusters) > 1) && defined(_profile_l2_pipeline_) && defined(_implement_const_single_buffer_) 
 
 #include <experiment.h>
 #include <cluster_synch.h>
@@ -726,7 +726,6 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
           // additional cluster waits for the DMA, then notifies the former about transfer completion.
 
           for (int i = 0; i < dma_n_tx; i++) {
-            // Launch transactions (only programming because DMA is currently not bi-directional)
             if((run_id > 0) && (run_id % 2))
               hero_memcpy_dev2host(l2_img[3], l1_img[3], dma_payload_dim * sizeof(uint32_t));
             else
@@ -803,4 +802,4 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
   #endif
 }
 
-// #endif
+#endif
