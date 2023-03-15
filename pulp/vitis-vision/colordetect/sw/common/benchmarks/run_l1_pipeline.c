@@ -14,7 +14,7 @@
 
 #include <configs.h>
 
-#ifdef _profile_l1_pipeline_
+#if ((n_clusters) == 1) && defined(_profile_l1_pipeline_) && defined(_implement_variable_multi_buffer_) 
 
 #include <experiment.h>
 #include <cluster_synch.h>
@@ -26,7 +26,7 @@ void run_l1_pipeline(const int cluster_id, const int core_id) {
   /* Runtime IDs */
 
   int sel_id; // Buffer selector
-  int run_id; // Pipeline execution run
+  int run_id; // Execution run
 
   /* Define cache stats */
 
@@ -69,8 +69,8 @@ void run_l1_pipeline(const int cluster_id, const int core_id) {
 
   /* Cluster steady state condition */
   
-  cluster_barrier_eu_soc_evt(cluster_id, 0);
-  if(!cluster_id) cluster_slv_restart_eu_soc_evt(cluster_id, 0);
+  cluster_barrier_all_eu_soc_evt(cluster_id, 0);
+  if(!cluster_id) cluster_slv_all_restart_eu_soc_evt(cluster_id, 0);
 
   /* ===================================================================== */
 
@@ -112,14 +112,14 @@ void run_l1_pipeline(const int cluster_id, const int core_id) {
     start_measurement(cluster_id, core_id, hit, trns, miss);
 
     // Cluster synchronization barrier
-    cluster_barrier_eu_soc_evt(cluster_id, 0);
+    cluster_barrier_all_eu_soc_evt(cluster_id, 0);
 
     // Cluster timer
     if(!cluster_id) t_experiment_sys_pov.cnt_0 = hero_get_clk_counter();
 
     // Activate clusters simultaneously
     // NB: Activation must be after the starting of time measurements
-    if(!cluster_id) cluster_slv_restart_eu_soc_evt(cluster_id, 0);
+    if(!cluster_id) cluster_slv_all_restart_eu_soc_evt(cluster_id, 0);
 
     /* ===================================================================== */
 
@@ -283,7 +283,7 @@ void run_l1_pipeline(const int cluster_id, const int core_id) {
     /* MEASUREMENT - END */
 
     // Cluster synchronization barrier
-    cluster_barrier_eu_soc_evt(cluster_id, 0);
+    cluster_barrier_all_eu_soc_evt(cluster_id, 0);
 
     // Cluster timer
     if(!cluster_id) t_experiment_sys_pov.cnt_1 = hero_get_clk_counter();
@@ -319,7 +319,7 @@ void run_l1_pipeline(const int cluster_id, const int core_id) {
 
     /* Restart clusters */
 
-    if(!cluster_id) cluster_slv_restart_eu_soc_evt(cluster_id, 0);
+    if(!cluster_id) cluster_slv_all_restart_eu_soc_evt(cluster_id, 0);
 
   } // job_id
 

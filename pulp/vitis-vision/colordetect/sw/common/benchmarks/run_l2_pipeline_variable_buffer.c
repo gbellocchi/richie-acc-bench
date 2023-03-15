@@ -32,7 +32,7 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
   /* Runtime IDs */
 
   int sel_id; // Buffer selector
-  int run_id; // Pipeline execution run
+  int run_id; // Execution run
 
   /* Define cache stats */
 

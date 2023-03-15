@@ -19,11 +19,14 @@
  * DSE parameters --> Benchmark
  * ===================================================================== */
 
+// #define _profile_l1_baseline_
 // #define _profile_l1_pipeline_
-#define _profile_l2_pipeline_
+// #define _profile_l2_baseline_
+#define _profile_l2_pipeline_single_cl_
+// #define _profile_l2_pipeline_multi_cl_
 
-#define _implement_const_single_buffer_
-// #define _implement_variable_multi_buffer_
+// #define _implement_const_single_buffer_
+#define _implement_variable_multi_buffer_
 
 /* =====================================================================
  * DSE parameters --> Application

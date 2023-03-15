@@ -19,8 +19,11 @@
  * DSE parameters --> Benchmark
  * ===================================================================== */
 
+// #define _profile_l1_baseline_
 // #define _profile_l1_pipeline_
-#define _profile_l2_pipeline_
+// #define _profile_l2_baseline_
+#define _profile_l2_pipeline_single_cl_
+// #define _profile_l2_pipeline_multi_cl_
 
 #define _implement_const_single_buffer_
 // #define _implement_variable_multi_buffer_
@@ -53,7 +56,7 @@
  * ===================================================================== */
 
 // System architecture
-#define n_clusters                          1
+#define n_clusters                          2 // 1 accelerator-rich + 1 to mimic bi-directional DMA
 
 // Accelerator-rich
 #define n_acc_total                         6

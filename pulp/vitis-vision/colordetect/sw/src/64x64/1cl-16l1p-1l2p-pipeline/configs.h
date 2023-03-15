@@ -20,7 +20,14 @@
  * ===================================================================== */
 
 // Application version
+// #define _profile_l1_baseline_
 #define _profile_l1_pipeline_
+// #define _profile_l2_baseline_
+// #define _profile_l2_pipeline_single_cl_
+// #define _profile_l2_pipeline_multi_cl_
+
+// #define _implement_const_single_buffer_
+// #define _implement_variable_multi_buffer_
 
 // Pipeline stages IDs
 #define RGB2HSV_CV_0_0    0
@@ -55,25 +62,31 @@
 // - L1
 #define l1_size_B                           128*1024 // bytes, real dimension
 #define l1_size_B_emulated                  256*1024 // bytes, emulated dimension (>=l1_size_B, must be a power of 2)
-#define n_l1_ports                          4
+#define n_l1_ports                          16
 #define l1_bank_stride                      1 // to emulate small port utilization (can also be done in HW reducing the number of ports)
 
-// L1 stored image tile
-#define l1_img_rows                         64 // do not change, designed on L1=256kB (emulated)
-#define l1_img_cols                         64 // do not change, designed on L1=256kB (emulated)
-#define l1_img_tile                         ((int) (l1_size_B) / ((sizeof(uint32_t)) * (l1_n_buffers))) // designed on L1=128kB (real)
-#define l1_n_buffer_reps                    ((int) ((l1_img_rows) * (l1_img_cols)) / (l1_img_tile))
+// // - L1 number of buffers (This depends on the type of optimization being adopted, e.g. pipelining, double buffering)
+// #define l1_n_buffers                        16
+
+// // L1 stored image tile
+// #define l1_img_rows                         64 // do not change, designed on L1=256kB (emulated)
+// #define l1_img_cols                         64 // do not change, designed on L1=256kB (emulated)
+// #define l1_img_tile                         ((int) (l1_size_B) / ((sizeof(uint32_t)) * (l1_n_buffers))) // designed on L1=128kB (real)
+// #define l1_n_buffer_reps                    ((int) ((l1_img_rows) * (l1_img_cols)) / (l1_img_tile))
 
 // - L1 number of buffers (This depends on the type of optimization being adopted, e.g. pipelining, double buffering)
-#define l1_n_buffers                        16
+#define l1_n_buffers                        2
+
+// L1 stored image tile
+#define l1_img_rows                         128 // do not change, designed on L1=256kB (emulated)
+#define l1_img_cols                         128 // do not change, designed on L1=256kB (emulated)
+#define l1_img_tile                         ((int) (l1_size_B) / ((sizeof(uint32_t)) * (l1_n_buffers))) // designed on L1=128kB (real)
+#define l1_n_buffer_reps                    ((int) ((l1_img_rows) * (l1_img_cols)) / (l1_img_tile))
 
 // - L1 image buffer
 #define l1_buffer_dim                       ((int) (l1_size_B) / (4 * (l1_n_buffers))) // Dimension of allocated buffer
                                     // This is also the dimension of the data tile executed by each processing stage of the cluster
                                     // Data are read row-by-row, so they can sequentialized with 1D DMA transfers
-
-// - Image tiling
-
 
 /* =====================================================================
  * DSE parameters --> L2
