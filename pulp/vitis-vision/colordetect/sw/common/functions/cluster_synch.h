@@ -17,6 +17,14 @@
 
 #include <configs.h>
 
+// Define message types used in benchmarks with SW events (max 8)
+
+#define CMD_TYPE_STAGE_INVOCATION 0 // A stage invokes the subsequent one
+#define CMD_TYPE_DMA_IN_START 1 // Output DMA starts (happens when a cluster is used to mimic bi-directional data transfer)
+#define CMD_TYPE_DMA_IN_TERMINATE 2 // A stage terminates transfering buffered data, hence frees the buffer of the previous stage
+#define CMD_TYPE_DMA_OUT_START 3 // Output DMA starts (happens when a cluster is used to mimic bi-directional data transfer)
+#define CMD_TYPE_DMA_OUT_TERMINATE 4 // Output DMA terminates (happens when a cluster is used to mimic bi-directional data transfer)
+
 /* ===================================================================== */
 
 /* Cluster synchronization based on SoC event FIFO */
@@ -39,7 +47,7 @@ static inline int check_cl_list_eu_soc_evt(int *cluster_array){
 
 /* Cluster barrier */
 
-static inline cluster_barrier_eu_soc_evt(const int cluster_id, const int experiment_id){
+static inline cluster_barrier_all_eu_soc_evt(const int cluster_id, const int experiment_id){
 
   // Set a barrier at the end of a profiling job. Master cluster sleeps waiting
   // for slave clusters to terminate. Once all slave clusters have terminated their operations,
@@ -121,7 +129,7 @@ static inline cluster_barrier_eu_soc_evt(const int cluster_id, const int experim
 
       __compiler_barrier();
 
-      eu_evt_maskWaitAndClr(1 << 0);
+      eu_evt_maskWaitAndClr(1 << CMD_TYPE_STAGE_INVOCATION);
       
       __compiler_barrier();
 
@@ -137,7 +145,7 @@ static inline cluster_barrier_eu_soc_evt(const int cluster_id, const int experim
 
 /* Restart slave clusters */
 
-static inline void cluster_slv_restart_eu_soc_evt(const int cluster_id, const int experiment_id){
+static inline void cluster_slv_all_restart_eu_soc_evt(const int cluster_id, const int experiment_id){
 
   // Wake up sleeping slave clusters to start a new profiling job.
 
@@ -157,7 +165,7 @@ static inline void cluster_slv_restart_eu_soc_evt(const int cluster_id, const in
           printf("[MST] [EXP-%d] Waking up SLV cluster %d\n", experiment_id, cid);
         #endif
 
-        eu_evt_trig(eu_evt_trig_cluster_addr(cid, 0), 0);
+        eu_evt_trig(eu_evt_trig_cluster_addr(cid, CMD_TYPE_STAGE_INVOCATION), 0);
 
       } 
 
@@ -172,5 +180,45 @@ static inline void cluster_slv_restart_eu_soc_evt(const int cluster_id, const in
 }
 
 /* ===================================================================== */
+
+/* Send command from MST (sender) to SLV (receiver) */
+
+static inline void send_cmd_eu_sw_evt(const int mst_cluster_id, const int slv_cluster_id, const int cmd_type){
+
+  if(mst_cluster_id == hero_rt_cluster_id()){
+
+    __compiler_barrier();
+
+    eu_evt_trig(eu_evt_trig_cluster_addr(slv_cluster_id, cmd_type), 0);
+
+    __compiler_barrier();
+
+  } else {
+
+    printf("<send_cmd_eu_sw_evt> - ERROR: MST %d is acting as cluster %d\n", hero_rt_cluster_id(), mst_cluster_id);
+
+  }
+
+}
+
+/* Wait for command sent from MST (sender) to SLV (receiver) */
+
+static inline void wait_cmd_eu_sw_evt(const int slv_cluster_id, const int mst_cluster_id, const int cmd_type){
+
+  if(slv_cluster_id == hero_rt_cluster_id()){
+
+    __compiler_barrier();
+
+   eu_evt_maskWaitAndClr(1 << cmd_type);
+
+    __compiler_barrier();
+
+  } else {
+
+    printf("<wait_cmd_eu_sw_evt> - ERROR: SLV %d is acting as cluster %d\n", hero_rt_cluster_id(), slv_cluster_id);
+
+  }
+
+}
 
 #endif

@@ -398,6 +398,11 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
   int buffer_id; // Buffer selector
   int run_id; // Pipeline execution run
 
+  /* Runtime indicators */
+
+  int n_busy_buffer_in;
+  int n_busy_buffer_out;
+
   /* Define cache stats */
 
   int hit[2], trns[2], miss[2];
@@ -511,7 +516,8 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
     start_measurement(cluster_id, core_id, hit, trns, miss);
 
     // Cluster synchronization barrier
-    if((!cluster_id) || (cluster_id >= (n_clusters/2))) cluster_barrier_all_eu_soc_evt(cluster_id, 0); /* -- CMD_TYPE: STAGE INVOCATION -- */ 
+    cluster_barrier_all_eu_soc_evt(cluster_id, 0); /* -- CMD_TYPE: STAGE INVOCATION -- */ 
+    if(!cluster_id) cluster_slv_all_restart_eu_soc_evt(cluster_id, 0);
 
     // Cluster timer
     if(!cluster_id) t_experiment_sys_pov.cnt_0 = hero_get_clk_counter();
@@ -528,42 +534,20 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
 
         run_id = i_img * l2_n_tiles + i_tile;
 
-                              /* DMA out clusters */
-
-        if(cluster_id >= (n_clusters/2)){
-
-            /* Transfer output tile to L2 */
-
-            // This implementation is like a tightly-coupled bounding between the output DMA 
-            // and a proxy core inside an accelerator-rich cluster because the processor of the
-            // additional cluster waits for the DMA, then notifies the former about transfer completion.
-
-            for (int i = 0; i < dma_n_tx; i++) {
-              // Launch transactions (only programming because DMA is currently not bi-directional)
-              if((run_id > 0) && (run_id % 2))
-                hero_memcpy_dev2host(l2_img[3], l1_img[3], dma_payload_dim * sizeof(uint32_t));
-              else
-                hero_memcpy_dev2host(l2_img[2], l1_img[2], dma_payload_dim * sizeof(uint32_t));
-            }
-
-            /* Send feedback about end of DMA transaction to MASTER CLUSTER */
-
-            send_cmd_eu_sw_evt(cluster_id, cluster_id - (n_clusters/2), CMD_TYPE_DMA_OUT_TERMINATE); /* -- CMD_TYPE: DMA OUT TERMINATE -- */
-
-            /* Go back to sleep until next invocation */
-
-            if(!(run_id == (n_img * l2_n_tiles - 1)))
-              wait_cmd_eu_sw_evt(cluster_id, cluster_id - (n_clusters/2), CMD_TYPE_DMA_OUT_START); /* -- CMD_TYPE: DMA OUT START -- */
-
-        } else {
-
                               /* Accelerator-rich cluster routine */
+
+        if(cluster_id < (n_clusters/2)){
 
           if(!run_id){
 
             /* Initialize selector */
             
             buffer_id = 0;
+
+            /* Initialize indicators */
+
+            n_busy_buffer_in = 0;
+            n_busy_buffer_out = 0;
 
             /* Program accelerators */
 
@@ -626,15 +610,8 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
           }
 
           /* Wait for invocation from previous pipeline stage */
-
-          // Cluster synchronization barrier
-          // This way pipeline stages will anticipate the initial accelerator programming phase 
-          // and will be ready for the input DMA transfer right after their invocation
           
-          if(cluster_id > 0){
-            if(!run_id)
-              cluster_barrier_all_eu_soc_evt(cluster_id, 0); /* -- CMD_TYPE: STAGE INVOCATION -- */ 
-            else
+          if((!run_id) && (cluster_id > 0)){
               wait_cmd_eu_sw_evt(cluster_id, cluster_id - 1, CMD_TYPE_STAGE_INVOCATION);  /* -- CMD_TYPE: STAGE INVOCATION -- */ 
           }
 
@@ -650,24 +627,29 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
 
           /* Wait for output DMA to terminate data transfer */
 
-          if(run_id > 0) 
-            wait_cmd_eu_sw_evt(cluster_id, cluster_id + (n_clusters/2), CMD_TYPE_DMA_OUT_TERMINATE);  /* -- CMD_TYPE: DMA OUT TERMINATE -- */  
-
+          if(run_id > 0){
+            wait_cmd_eu_sw_evt(cluster_id, cluster_id + (n_clusters/2), CMD_TYPE_DMA_OUT_TERMINATE); /* -- CMD_TYPE: DMA OUT TERMINATE -- */  
+            n_busy_buffer_out++;  
+          }
+            
           /* Wake up next pipeline stage */
 
-          if((run_id > 0) && !(cluster_id == (n_clusters/2 - 1)))
+          if((run_id == 1) && (cluster_id < (n_clusters/2 - 1)))
             send_cmd_eu_sw_evt(cluster_id, cluster_id + 1, CMD_TYPE_STAGE_INVOCATION);  /* -- CMD_TYPE: STAGE INVOCATION -- */ 
 
           /* Wait for input DMA */
 
           // Either issued in previous round or during the first one
 
-          hero_dma_wait(dma_in[buffer_id].job);
+          hero_dma_wait(dma_in[buffer_id].job); 
+          n_busy_buffer_in++;
           
           /* Notify the stage[i-1] about the successful input DMA transfer, so as to free a buffer from already sunk data */
 
-          if((run_id > ((l2_n_buffers / 2) - 1)) && (cluster_id > 0))
+          if((n_busy_buffer_in == (l2_n_buffers / 2)) && (cluster_id > 0)){
             send_cmd_eu_sw_evt(cluster_id, cluster_id - 1, CMD_TYPE_DMA_IN_TERMINATE);  /* -- CMD_TYPE: DMA IN TERMINATE -- */ 
+            n_busy_buffer_in--;
+          }
 
           /* Run pipeline stages */
 
@@ -719,11 +701,43 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
           // then stage[i-1] must wait for feedback from the former before issuing new output transfers. 
           // This way, not yet processed data won't be overwritten.
 
-          if((run_id > ((l2_n_buffers / 2) - 1)) && !(cluster_id == (n_clusters/2 - 1)))
+          if((n_busy_buffer_out == (l2_n_buffers / 2)) && (cluster_id < (n_clusters/2 - 1))){
             wait_cmd_eu_sw_evt(cluster_id, cluster_id + 1, CMD_TYPE_DMA_IN_TERMINATE);
+            n_busy_buffer_out--;
+          }
 
           // Wake up a cluster that is only used to mimic the bi-directional DMA for ouputs
           send_cmd_eu_sw_evt(cluster_id, cluster_id + (n_clusters/2), CMD_TYPE_DMA_OUT_START); /* -- CMD_TYPE: DMA OUT START -- */
+          
+        } else {
+
+                              /* DMA out clusters */
+
+          // if(!(run_id == (n_img * l2_n_tiles - 1))){
+
+          /* Sleep until next invocation */
+
+          wait_cmd_eu_sw_evt(cluster_id, cluster_id - (n_clusters/2), CMD_TYPE_DMA_OUT_START); /* -- CMD_TYPE: DMA OUT START -- */
+
+          /* Transfer output tile to L2 */
+
+          // This implementation is like a tightly-coupled bounding between the output DMA 
+          // and a proxy core inside an accelerator-rich cluster because the processor of the
+          // additional cluster waits for the DMA, then notifies the former about transfer completion.
+
+          for (int i = 0; i < dma_n_tx; i++) {
+            // Launch transactions (only programming because DMA is currently not bi-directional)
+            if((run_id > 0) && (run_id % 2))
+              hero_memcpy_dev2host(l2_img[3], l1_img[3], dma_payload_dim * sizeof(uint32_t));
+            else
+              hero_memcpy_dev2host(l2_img[2], l1_img[2], dma_payload_dim * sizeof(uint32_t));
+          }
+
+          /* Send feedback about end of DMA transaction to MASTER CLUSTER */
+
+          send_cmd_eu_sw_evt(cluster_id, cluster_id - (n_clusters/2), CMD_TYPE_DMA_OUT_TERMINATE); /* -- CMD_TYPE: DMA OUT TERMINATE -- */
+          
+          // }
           
         }
       } // n_tiles  
