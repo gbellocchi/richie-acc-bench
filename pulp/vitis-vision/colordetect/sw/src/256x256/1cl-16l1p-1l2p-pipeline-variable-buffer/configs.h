@@ -78,7 +78,7 @@
 #define l1_n_buffer_reps                    ((int) ((l1_img_rows) * (l1_img_cols)) / (l1_img_tile))
 
 // - L1 image buffer
-#define l1_buffer_dim                       ((int) (l1_size_B) / (4 * (l1_n_buffers))) // Dimension of allocated buffer
+#define l1_buffer_dim                       l1_img_tile // Dimension of allocated buffer, designed on L1=128kB (real)
                                     // This is also the dimension of the data tile executed by each processing stage of the cluster
                                     // Data are read row-by-row, so they can sequentialized with 1D DMA transfers
 
