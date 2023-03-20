@@ -316,23 +316,9 @@ int profiling(const int cluster_id, const int core_id)
   
   }
 
-  /* Launch profiling */
+  /* Launch profiling benchmark */
 
-  #if defined(_profile_l1_baseline_)
-    run_l1_baseline(cluster_id, core_id);
-  #endif
-
-  #if defined(_profile_l1_pipeline_)
-    run_l1_pipeline(cluster_id, core_id);
-  #endif
-  
-  #if defined(_profile_l2_baseline_)
-    run_l2_baseline(cluster_id, core_id);
-  #endif
-
-  #if defined(_profile_l2_pipeline_single_cl_) || defined(_profile_l2_pipeline_multi_cl_)
-    run_l2_pipeline(cluster_id, core_id);
-  #endif
+  run_benchmark(cluster_id, core_id);
 
   if(cluster_id==0 && core_id==0){
 
