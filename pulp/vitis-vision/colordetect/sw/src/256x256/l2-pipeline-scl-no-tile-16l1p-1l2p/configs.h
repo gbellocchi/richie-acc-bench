@@ -21,7 +21,7 @@
  * DSE parameters --> Benchmark
  * ===================================================================== */
 
-#define BENCHMARK_NAME "l2-pipeline-scl-no-tile-16l1p-1l2p-256x256"
+#define BENCHMARK_NAME "l2-pipeline-scl-no-tile-16l1p-1l2p-256x256-8img"
 #define BENCHMARK_TYPE L2_PIPELINE_SCL_NO_TILE // See list_benchmarks.h
 
 /* =====================================================================
@@ -60,9 +60,9 @@
 #define n_acc_stages                        6 // Total number of processing stages
 
 // Application
-#define n_img                               2 // Number of input images to be processed
-#define img_rows                            128 
-#define img_cols                            128 
+#define n_img                               8 // Number of input images to be processed
+#define img_rows                            256 
+#define img_cols                            256 
 #define img_dim                             img_rows * img_cols
 
 /* =====================================================================
@@ -118,6 +118,7 @@
 // - DMA 
 #define dma_payload_dim                     l1_img_tile // Payload dimension
 #define dma_n_tx                            l1_n_buffer_reps // Number of transfers, designed on L1=128kB (real)
+#define dma_n_max_tx_on_flight              2 // Depends which buffering scheme is used (single: 1, double: 2)
 
 // Event unit
 #define max_num_sw_evt                      8

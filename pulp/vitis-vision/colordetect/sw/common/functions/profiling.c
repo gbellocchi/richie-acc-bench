@@ -83,9 +83,12 @@ int print_job_stats(
 
       printf(" # - [Params] N_clusters:             %d \n",           (int32_t)n_clusters);
       printf(" # - [Params] N_acc:                  %d \n",           (int32_t)n_acc_active);
+      printf(" # - [Params] N_img:                  %d \n",           (int32_t)n_img);
+      printf(" # - [Params] Img_rows:               %d \n",           (int32_t)img_rows);
+      printf(" # - [Params] Img_cols:               %d \n",           (int32_t)img_cols);
       printf(" # - [Params] DIM_dma_payload:        %d \n",           (int32_t)dma_payload_dim);
-      // printf(" # - [Params] DIM_buffer:             %d \n",           (int32_t)l1_buffer_dim);
-      // printf(" # - [Params] N_l1_ports:             %d \n",           (int32_t)n_l1_ports);
+      printf(" # - [Params] DIM_buffer:             %d \n",           (int32_t)(l1_img_rows * l1_img_cols));
+      printf(" # - [Params] N_l1_ports:             %d \n",           (int32_t)n_l1_ports);
       printf(" # - [Params] N_L2_ports:             %d \n",           (int32_t)n_l2_ports_phy);
 
     printf(" #\n");

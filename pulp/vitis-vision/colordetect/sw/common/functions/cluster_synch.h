@@ -25,6 +25,17 @@
 #define CMD_TYPE_DMA_OUT_START 3 // Output DMA starts (happens when a cluster is used to mimic bi-directional data transfer)
 #define CMD_TYPE_DMA_OUT_TERMINATE 4 // Output DMA terminates (happens when a cluster is used to mimic bi-directional data transfer)
 
+// Macros for retrieving SoC event information
+#define get_soc_evt_cid(val)     ((0xFF) & (val >> 16))
+#define get_soc_evt_aid(val)     ((0xFF) & (val >> 8))
+#define get_soc_evt_type(val)    ((0xFF) & (val >> 0))
+
+#define codify_soc_evt_cid(val)     ((0xFF & val) << 16)
+#define codify_soc_evt_aid(val)     ((0xFF & val) << 8)
+#define codify_soc_evt_type(val)    ((0xFF & val) << 0)
+
+#define my_soc_evt(cid, aid, type) (codify_soc_evt_cid(cid) + codify_soc_evt_aid(aid) + codify_soc_evt_type(type))
+
 /* ===================================================================== */
 
 /* Cluster synchronization based on SoC event FIFO */
@@ -183,13 +194,16 @@ static inline void cluster_slv_all_restart_eu_soc_evt(const int cluster_id, cons
 
 /* Send command from MST (sender) to SLV (receiver) */
 
-static inline void send_cmd_eu_sw_evt(const int mst_cluster_id, const int slv_cluster_id, const int cmd_type){
+static inline void send_cmd_eu_sw_evt(const int mst_cluster_id, const int slv_cluster_id, const int acc_id, const int cmd_type){
 
   if(mst_cluster_id == hero_rt_cluster_id()){
 
+    const uint32_t soc_evt_msg = my_soc_evt(mst_cluster_id, acc_id, cmd_type);
+
     __compiler_barrier();
 
-    eu_evt_trig(eu_evt_trig_cluster_addr(slv_cluster_id, cmd_type), 0);
+    // eu_evt_trig(eu_evt_trig_cluster_addr(slv_cluster_id, cmd_type), 0);
+    pulp_write32(ARCHI_CLUSTER_PERIPHERALS_GLOBAL_ADDR(slv_cluster_id) + ARCHI_EU_OFFSET + EU_SOC_EVENTS_AREA_OFFSET + EU_SOC_EVENTS_CURRENT_EVENT, soc_evt_msg);
 
     __compiler_barrier();
 
@@ -203,19 +217,35 @@ static inline void send_cmd_eu_sw_evt(const int mst_cluster_id, const int slv_cl
 
 /* Wait for command sent from MST (sender) to SLV (receiver) */
 
-static inline void wait_cmd_eu_sw_evt(const int slv_cluster_id, const int mst_cluster_id, const int cmd_type){
+static inline uint32_t wait_cmd_eu_sw_evt(const int slv_cluster_id, const int mst_cluster_id, const int cmd_type){
 
   if(slv_cluster_id == hero_rt_cluster_id()){
 
     __compiler_barrier();
 
-   eu_evt_maskWaitAndClr(1 << cmd_type);
+    // eu_evt_maskWaitAndClr(1 << cmd_type);
+
+    // Set event mask
+    eu_evt_maskSet(1 << PULP_SOC_EVENTS_EVENT);
+
+    // Wait for synchronization
+    eu_evt_wait();
+
+    // Decode associated event message
+    const uint32_t soc_evt_msg = eu_soc_events_pop();
+
+    // Clear event unit
+    eu_evt_clr(1 << PULP_SOC_EVENTS_EVENT);
 
     __compiler_barrier();
+
+    return soc_evt_msg;
 
   } else {
 
     printf("<wait_cmd_eu_sw_evt> - ERROR: SLV %d is acting as cluster %d\n", hero_rt_cluster_id(), slv_cluster_id);
+
+    return -1;
 
   }
 

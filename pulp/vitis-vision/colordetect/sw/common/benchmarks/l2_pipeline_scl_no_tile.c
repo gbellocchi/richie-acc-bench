@@ -39,8 +39,8 @@ void run_benchmark(const int cluster_id, const int core_id) {
 
   int n_img_in[n_acc_active], n_img_out[n_acc_active];
   int n_tiles_in[n_acc_active], n_tiles_in_on_flight[n_acc_active];
+  int n_tiles_compute[n_acc_active], n_tiles_compute_on_flight[n_acc_active];
   int n_tiles_out[n_acc_active], n_tiles_out_on_flight[n_acc_active], n_tiles_out_not_checked[n_acc_active];
-  int n_tiles_processed[n_acc_active];
 
   /* SoC events */
 
@@ -179,10 +179,11 @@ void run_benchmark(const int cluster_id, const int core_id) {
       n_img_out[acc_id] = 0;
       n_tiles_in[acc_id] = 0;
       n_tiles_in_on_flight[acc_id] = 0;
+      n_tiles_compute[acc_id] = 0;
+      n_tiles_compute_on_flight[acc_id] = 0;
       n_tiles_out[acc_id] = 0;
-      n_tiles_out_not_checked[acc_id] = 0;
       n_tiles_out_on_flight[acc_id] = 0;
-      n_tiles_processed[acc_id] = 0;
+      n_tiles_out_not_checked[acc_id] = 0;
     }
 
     n_img_out_total = 0;
@@ -207,16 +208,9 @@ void run_benchmark(const int cluster_id, const int core_id) {
           }
 
         } else {
-          
+
           // Swap buffer ID
           buffer_id = !buffer_id;
-
-          for(int acc_id=0; acc_id<n_acc_active; acc_id++){
-            if( (!acc_id) || ((acc_id > 0) && (n_img_out[acc_id-1] > n_img_in[acc_id])) ){
-              // Swap buffer pointers
-              arov_swap_buffers_color_detect(&arov, cluster_id, buffer_id, l1_img);
-            }
-          }
 
         }
 
@@ -226,26 +220,6 @@ void run_benchmark(const int cluster_id, const int core_id) {
 
           // Check that each stage starts after the previous has processed an entire image
           if((!acc_id) || ((acc_id > 0) && (n_img_out[acc_id-1] > n_img_in[acc_id]))){
-            
-            /* =========================== */
-            /* Transfer input tile from L2 */
-            /* =========================== */
-
-            // Check that in the next round, accelerator will still need tiles to be read from L2 memory
-            if((n_tiles_in[acc_id] + n_tiles_in_on_flight[acc_id]) < (l2_n_tiles * n_img)){
-              
-              #ifdef PRINT_PIPELINE_LOG
-                printf("dma_in_transfer[%d]\n", acc_id);
-              #endif
-
-              // NB: During the first round you cannot hide the DMA transfers
-              for (int i_dma = 0; i_dma < dma_n_tx; i_dma++) {
-                dma_in[buffer_id + 2 * acc_id].job = hero_memcpy_host2dev_async(l1_img[buffer_id], l2_img[buffer_id], dma_payload_dim * sizeof(uint32_t));
-              }
-
-              n_tiles_in_on_flight[acc_id]++;
-
-            }
 
             /* ================== */
             /* Wait for input DMA */
@@ -255,7 +229,7 @@ void run_benchmark(const int cluster_id, const int core_id) {
               printf("dma_in_wait[%d]\n", acc_id);
             #endif
 
-            if((run_id > (acc_id * l2_n_tiles)) && (n_tiles_in_on_flight[acc_id] > 0)){
+            if((run_id >= (acc_id * l2_n_tiles + dma_n_max_tx_on_flight)) && (n_tiles_in_on_flight[acc_id] > 0)){
 
               // If double buffering, then wait for DMA transfer issued in previous round
               hero_dma_wait(dma_in[!buffer_id + 2 * acc_id].job); 
@@ -264,24 +238,87 @@ void run_benchmark(const int cluster_id, const int core_id) {
               n_tiles_in[acc_id]++;
 
             }
+            
+            /* =========================== */
+            /* Transfer input tile from L2 */
+            /* =========================== */
+
+            // Check that in the next round, accelerator will still need tiles to be read from L2 memory
+            if((n_tiles_in[acc_id] + n_tiles_in_on_flight[acc_id]) < (l2_n_tiles * n_img)){
+
+              // Check there is a free input buffer for the current accelerator
+              if(n_tiles_in_on_flight[acc_id] < dma_n_max_tx_on_flight){
+              
+                #ifdef PRINT_PIPELINE_LOG
+                  printf("dma_in_transfer[%d]\n", acc_id);
+                #endif
+
+                // NB: During the first round you cannot hide the DMA transfers
+                for (int i_dma = 0; i_dma < dma_n_tx; i_dma++) {
+                  dma_in[buffer_id + 2 * acc_id].job = hero_memcpy_host2dev_async(l1_img[buffer_id], l2_img[buffer_id], dma_payload_dim * sizeof(uint32_t));
+                }
+
+                n_tiles_in_on_flight[acc_id]++;
+
+              }
+
+            }
 
           }
-        }
 
-        /* ============================================== */
-        /* Wait for output DMA to terminate data transfer */
-        /* ============================================== */
+          /* ======================== */
+          /* Wait for pipeline stages */
+          /* ======================== */
 
-        for(int acc_id=0; acc_id<n_acc_active; acc_id++){
+          // Check that each stage starts after a tile is ready in L1 memory
+          if(n_tiles_compute_on_flight[acc_id] > 0){
+
+            #ifdef PRINT_PIPELINE_LOG
+              printf("compute_wait[%d]\n", acc_id);
+            #endif
+
+            // Wait accelerator execution
+            while(!arov_is_finished(&arov, cluster_id, acc_id)){
+
+              arov_wait_eu(&arov, cluster_id, acc_id);
+
+            }
+
+            n_tiles_compute_on_flight[acc_id]--;
+            n_tiles_compute[acc_id]++;
+
+            // Swap accelerator buffers
+            arov_swap_buffers_color_detect(&arov, cluster_id, buffer_id, l1_img);
+
+          }
+
+          /* =================== */
+          /* Run pipeline stages */
+          /* =================== */
+
+          // Check that each stage starts after a tile is ready in L1 memory
+          if(n_tiles_in[acc_id] > n_tiles_compute[acc_id]){
+
+            #ifdef PRINT_PIPELINE_LOG
+              printf("compute_start[%d]\n", acc_id);
+            #endif
+
+            arov_compute(&arov, cluster_id, acc_id);
+
+            n_tiles_compute_on_flight[acc_id]++;
+
+          }
+
+          /* ============================================== */
+          /* Wait for output DMA to terminate data transfer */
+          /* ============================================== */
 
           // Check if DMA out termination events have been received by other accelerator processes
-          if(n_tiles_out_not_checked[acc_id] > 0){
-            n_tiles_out[acc_id] += n_tiles_out_not_checked[acc_id];
-            n_tiles_out_not_checked[acc_id] = 0;
-          }
+          n_tiles_out[acc_id] += n_tiles_out_not_checked[acc_id];
+          n_tiles_out_not_checked[acc_id] = 0;
 
           // Check if are still DMA output transaction to terminate
-          if(n_tiles_processed[acc_id] > n_tiles_out[acc_id]){
+          if(n_tiles_out_on_flight[acc_id] > 0){
 
             #ifdef PRINT_PIPELINE_LOG
               printf("dma_out_wait[%d]\n", acc_id);
@@ -309,56 +346,15 @@ void run_benchmark(const int cluster_id, const int core_id) {
 
             // Count tiles been transferred out for each pipeline stage
             if(soc_evt_acc == acc_id){
+              n_tiles_out_on_flight[acc_id]--;
               n_tiles_out[acc_id]++; 
             } else if(soc_evt_acc != acc_id){
+              n_tiles_out_on_flight[soc_evt_acc]--;
               n_tiles_out_not_checked[soc_evt_acc]++;
             }
 
             // Count images been transferred out for each pipeline stage
             n_img_out[acc_id] = n_tiles_out[acc_id]/l2_n_tiles;
-
-          }
-        }
-
-        /* =================== */
-        /* Run pipeline stages */
-        /* =================== */
-
-        for(int acc_id=0; acc_id<n_acc_active; acc_id++){
-
-          // Check that each stage starts after a tile is ready in L1 memory
-          if(n_tiles_in[acc_id] > n_tiles_processed[acc_id]){
-
-            #ifdef PRINT_PIPELINE_LOG
-              printf("compute_start[%d]\n", acc_id);
-            #endif
-
-            arov_compute(&arov, cluster_id, acc_id);
-
-          }
-        }
-
-        for(int acc_id=0; acc_id<n_acc_active; acc_id++){
-
-          /* ======================== */
-          /* Wait for pipeline stages */
-          /* ======================== */
-
-          // Check that each stage starts after a tile is ready in L1 memory
-          if(n_tiles_in[acc_id] > n_tiles_processed[acc_id]){
-
-            #ifdef PRINT_PIPELINE_LOG
-              printf("compute_wait[%d]\n", acc_id);
-            #endif
-
-            // Wait accelerator execution
-            while(!arov_is_finished(&arov, cluster_id, acc_id)){
-
-              arov_wait_eu(&arov, cluster_id, acc_id);
-
-            }
-
-            n_tiles_processed[acc_id]++;
 
           }
 
@@ -367,15 +363,22 @@ void run_benchmark(const int cluster_id, const int core_id) {
           /* ========================== */
 
           // Check that DMA output transaction starts after the correspondant stage has processed its tile
-          if(n_tiles_processed[acc_id] > n_tiles_out[acc_id]){
+          if(n_tiles_compute[acc_id] > n_tiles_out[acc_id]){
 
-            #ifdef PRINT_PIPELINE_LOG
-              printf("dma_out_tx[%d]\n", acc_id);
-            #endif
-          
-            // Wake up a cluster that is only used to mimic the bi-directional DMA for ouputs
-            send_cmd_eu_sw_evt(cluster_id, cluster_id + (n_clusters/2), acc_id, CMD_TYPE_DMA_OUT_START); /* -- CMD_TYPE: DMA OUT START -- */
+            // Check there is a free output buffer for the current accelerator
+            if(n_tiles_out_on_flight[acc_id] < dma_n_max_tx_on_flight){
+
+              #ifdef PRINT_PIPELINE_LOG
+                printf("dma_out_tx[%d]\n", acc_id);
+              #endif
             
+              // Wake up a cluster that is only used to mimic the bi-directional DMA for ouputs
+              send_cmd_eu_sw_evt(cluster_id, cluster_id + (n_clusters/2), acc_id, CMD_TYPE_DMA_OUT_START); /* -- CMD_TYPE: DMA OUT START -- */
+            
+              n_tiles_out_on_flight[acc_id]++;
+
+            }
+
           }
 
         }
