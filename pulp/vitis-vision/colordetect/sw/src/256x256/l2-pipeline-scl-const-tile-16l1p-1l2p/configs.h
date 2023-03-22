@@ -15,42 +15,50 @@
 #ifndef __CONFIGS_H__
 #define __CONFIGS_H__
 
+#include <list_benchmarks.h>
+
 /* =====================================================================
  * DSE parameters --> Benchmark
  * ===================================================================== */
 
-// #define _profile_l1_baseline_
-// #define _profile_l1_pipeline_
-// #define _profile_l2_baseline_
-#define _profile_l2_pipeline_single_cl_
-// #define _profile_l2_pipeline_multi_cl_
-
-// #define _implement_const_single_buffer_
-#define _implement_variable_multi_buffer_
+#define BENCHMARK_NAME "l2-pipeline-scl-const-tile-16l1p-1l2p-256x256"
+#define BENCHMARK_TYPE L2_PIPELINE_SCL_CONST_TILE // See list_benchmarks.h
 
 /* =====================================================================
  * DSE parameters --> Application
  * ===================================================================== */
 
-// Pipeline stages IDs
-#define RGB2HSV_CV_0_0    0
-#define THRESHOLD_CV_0_1  1
-#define ERODE_CV_0_2      2
-#define DILATE_CV_0_3     3
-#define DILATE_CV_0_4     4
-#define ERODE_CV_0_5      5
+// Macros for retrieving accelerator integration information
+#define get_acc_cid(val)     ((0x000000FF) & (val >> 0))
+#define get_acc_aid(val)     ((0x000000FF) & (val >> 8))
+#define get_type(val)    ((0x000000FF) & (val >> 16))
+
+#define codify_cid(val) (val << 0)
+#define codify_aid(val) (val << 8)
+#define codify_type(val) (val << 16)
+
+#define my_acc(cid, aid, type) (codify_cid(cid) + codify_aid(aid) + codify_type(type))
+
+// Accelerator integration information
+#define RGB2HSV_CV_0      my_acc(0, 0, RGB2HSV_CV)
+#define THRESHOLD_CV_1    my_acc(0, 1, THRESHOLD_CV)
+#define ERODE_CV_2        my_acc(0, 2, ERODE_CV)
+#define DILATE_CV_3       my_acc(0, 3, DILATE_CV)
+#define DILATE_CV_4       my_acc(0, 4, DILATE_CV)
+#define ERODE_CV_5        my_acc(0, 5, ERODE_CV)
 
 /* =====================================================================
  * DSE parameters --> System
  * ===================================================================== */
 
 // System architecture
-#define n_clusters                          1
+#define n_clusters                          2 // 1 accelerator-rich + 1 to mimic bi-directional DMA
 
 // Accelerator-rich
 #define n_acc_total                         6
 #define n_acc_active                        n_acc_total
-#define n_acc_stages                        6 // Total number of processing stages
+#define n_acc_stages                        n_acc_total // Total number of processing stages
+#define n_acc_stages_cl                     ((int) (n_acc_stages) / (((int) (n_clusters) / (2)))) // Total number of processing stages per cluster
 
 // Application
 #define n_img                               4 // Number of input images to be processed
@@ -65,17 +73,17 @@
 // - L1
 #define l1_size_B                           128*1024 // bytes, real dimension
 #define l1_size_B_emulated                  256*1024 // bytes, emulated dimension (>=l1_size_B, must be a power of 2)
-#define n_l1_ports                          4
+#define n_l1_ports                          16
 #define l1_bank_stride                      1 // to emulate small port utilization (can also be done in HW reducing the number of ports)
 
 // - L1 number of buffers (This depends on the type of optimization being adopted, e.g. pipelining, double buffering)
-#define l1_n_buffers                        16
+#define l1_n_buffers                        4
 
 // L1 stored image tile
-#define l1_img_rows                         64 // do not change, designed on L1=256kB (emulated)
-#define l1_img_cols                         64 // do not change, designed on L1=256kB (emulated)
+#define l1_img_rows                         128 // do not change, designed on L1=256kB (emulated)
+#define l1_img_cols                         128 // do not change, designed on L1=256kB (emulated)
 #define l1_img_tile                         ((int) (l1_size_B) / ((sizeof(uint32_t)) * (l1_n_buffers))) // designed on L1=128kB (real)
-#define l1_n_buffer_reps                    ((int) ((l1_img_rows) * (l1_img_cols)) / (l1_img_tile))
+#define l1_n_buffer_reps                    ((int) ((l1_img_rows) * (l1_img_cols)) / (l1_img_tile))  // to cope with difference between emulated and real L1 memory
 
 // - L1 image buffer
 #define l1_buffer_dim                       l1_img_tile // Dimension of allocated buffer, designed on L1=128kB (real)
@@ -98,11 +106,11 @@
 #define l2_n_words_per_port                 ((int) (l2_n_bytes_per_port) / (sizeof(uint32_t)))
 
 // - L2 number of buffers (This depends on the type of optimization being adopted, e.g. pipelining, double buffering)
-#define l2_n_buffers                        2 * (n_acc_stages + 1)
+#define l2_n_buffers                        4
 
 // - L2 image buffer
 #define l2_buffer_dim                       l1_img_tile // Equals dimension of tile passed to L1 memory
-#define l2_n_tiles                          ((int) (img_dim) / (l1_img_tile)) // Number of tiles that are passed to L1 memory
+#define l2_n_tiles                          ((int) (img_dim) / ((l1_img_tile) * (l1_n_buffer_reps))) // Number of tiles that are passed to L1 memory
 
 /* =====================================================================
  * DSE parameters --> Cluster peripherals
@@ -110,7 +118,8 @@
 
 // - DMA 
 #define dma_payload_dim                     l1_img_tile // Payload dimension
-#define dma_n_tx                            ((int) (img_dim) / (l1_img_tile)) // Number of transfers, designed on L1=128kB (real)
+#define dma_n_tx                            l1_n_buffer_reps // Number of transfers, designed on L1=128kB (real)
+#define dma_n_max_tx_on_flight              2 // Depends which buffering scheme is used (single: 1, double: 2)
 
 // Event unit
 #define max_num_sw_evt                      8
