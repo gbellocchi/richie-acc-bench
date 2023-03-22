@@ -82,7 +82,8 @@ int print_job_stats(
     // Runtime parameters
 
       printf(" # - [Params] N_clusters:             %d \n",           (int32_t)n_clusters);
-      printf(" # - [Params] N_acc:                  %d \n",           (int32_t)n_acc_active);
+      printf(" # - [Params] N_acc:                  %d \n",           (int32_t)n_acc_stages);
+      printf(" # - [Params] N_acc_cl:               %d \n",           (int32_t)n_acc_stages_cl);
       printf(" # - [Params] N_img:                  %d \n",           (int32_t)n_img);
       printf(" # - [Params] Img_rows:               %d \n",           (int32_t)img_rows);
       printf(" # - [Params] Img_cols:               %d \n",           (int32_t)img_cols);
