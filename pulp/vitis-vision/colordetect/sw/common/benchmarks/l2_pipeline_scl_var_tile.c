@@ -105,7 +105,7 @@ void run_benchmark(const int cluster_id, const int core_id) {
 
   /* Cluster steady state condition */
   
-  cluster_barrier_all_eu_soc_evt(cluster_id, 0);
+  cluster_barrier_all_eu_soc_evt(cluster_id, 0, 0xFFFFFFFF);
   if(!cluster_id) cluster_slv_all_restart_eu_soc_evt(cluster_id, 0);
 
   /* ===================================================================== */
@@ -148,7 +148,7 @@ void run_benchmark(const int cluster_id, const int core_id) {
     start_measurement(cluster_id, core_id, hit, trns, miss);
 
     // Cluster synchronization barrier
-    cluster_barrier_all_eu_soc_evt(cluster_id, 0);
+    cluster_barrier_all_eu_soc_evt(cluster_id, 0, 0xFFFFFFFF);
 
     // Cluster timer
     if(!cluster_id) t_experiment_sys_pov.cnt_0 = hero_get_clk_counter();
@@ -341,7 +341,7 @@ void run_benchmark(const int cluster_id, const int core_id) {
     /* MEASUREMENT - END */
 
     // Cluster synchronization barrier
-    cluster_barrier_all_eu_soc_evt(cluster_id, 0);
+    cluster_barrier_all_eu_soc_evt(cluster_id, 0, 0xFFFFFFFF);
 
     // Cluster timer
     if(!cluster_id) t_experiment_sys_pov.cnt_1 = hero_get_clk_counter();

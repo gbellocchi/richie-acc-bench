@@ -427,19 +427,14 @@ void run_benchmark(const int cluster_id, const int core_id) {
             // Check there is a free output buffer for the current accelerator
             if(n_tiles_out_on_flight[acc_id] < dma_n_max_tx_on_flight){
 
-              // Check whether there is at least one free L2 image buffer before to move data out
-              if((acc_id < (n_acc_stages_cl - 1)) && ((n_img_out[acc_id] - n_img_in[acc_id + 1]) < (l2_n_buffers / 2))){
-
-                #ifdef PRINT_PIPELINE_LOG
-                  printf("dma_out_tx[%d]\n", acc_id);
-                #endif
-              
-                // Wake up a cluster that is only used to mimic the bi-directional DMA for ouputs
-                send_cmd_eu_sw_evt(cluster_id, cluster_id + (n_clusters/2), acc_id, CMD_TYPE_DMA_OUT_START); /* -- CMD_TYPE: DMA OUT START -- */
-              
-                n_tiles_out_on_flight[acc_id]++;
-
-              }
+              #ifdef PRINT_PIPELINE_LOG
+                printf("dma_out_tx[%d]\n", acc_id);
+              #endif
+            
+              // Wake up a cluster that is only used to mimic the bi-directional DMA for ouputs
+              send_cmd_eu_sw_evt(cluster_id, cluster_id + (n_clusters/2), acc_id, CMD_TYPE_DMA_OUT_START); /* -- CMD_TYPE: DMA OUT START -- */
+            
+              n_tiles_out_on_flight[acc_id]++;
 
             }
 
