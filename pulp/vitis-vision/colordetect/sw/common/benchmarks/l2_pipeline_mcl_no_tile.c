@@ -1,12 +1,12 @@
 /* =====================================================================
  * Project:      Color detect
- * Title:        l2_pipeline_scl_no_tile.c
+ * Title:        l2_pipeline_mcl_no_tile.c
  * Description:  Implementation of an accelerator-rich vision pipeline 
- *               in a PULP cluster. Each accelerator stage needs to wait
- *               for the previous to process an entire image before to
- *               start.
+ *               in a multi-cluster PULP architecture. Each accelerator 
+ *               stage needs to wait for the previous to process an 
+ *               entire image before to start.
  *
- * $Date:        24.2.2023
+ * $Date:        21.3.2023
  * ===================================================================== */
 /*
  * Copyright (C) 2023 University of Modena and Reggio Emilia.
@@ -18,7 +18,7 @@
 #include <configs.h>
 #include <list_benchmarks.h>
 
-#if (BENCHMARK_TYPE == L2_PIPELINE_SCL_NO_TILE)
+#if (BENCHMARK_TYPE == L2_PIPELINE_MCL_NO_TILE)
 
 #include <experiment.h>
 #include <cluster_synch.h>
@@ -36,17 +36,25 @@ void run_benchmark(const int cluster_id, const int core_id) {
 
   /* Runtime indicators */
   
-  int n_img_out_total;
-
   // Processing status concerning current cluster
+  int n_img_out_total;
   int n_img_in[n_acc_stages_cl], n_img_out[n_acc_stages_cl];
   int n_tiles_in[n_acc_stages_cl], n_tiles_in_on_flight[n_acc_stages_cl];
   int n_tiles_compute[n_acc_stages_cl], n_tiles_compute_on_flight[n_acc_stages_cl];
   int n_tiles_out[n_acc_stages_cl], n_tiles_out_on_flight[n_acc_stages_cl], n_tiles_out_not_checked[n_acc_stages_cl];
 
+  // Number of images been processed from previous cluster and ready for use by current one
+  int n_img_prev_cl_ready;
+
+  // Number of images been used from next cluster, hence freeing the correspondant L2 buffer
+  int n_img_next_cl_used, n_img_next_cl_used_on_flight;
+
   /* SoC events */
 
   uint32_t soc_evt_msg, soc_evt_mst, soc_evt_acc, soc_evt_cmd;
+
+  // Asynchronous terminations from slave clusters
+  int n_slv_cl_terminate[n_clusters];
 
   /* Define cache stats */
 
@@ -176,6 +184,11 @@ void run_benchmark(const int cluster_id, const int core_id) {
     
     run_id = 0;
 
+    n_img_prev_cl_ready = 0;
+    n_img_next_cl_used = 0;
+
+    n_img_next_cl_used_on_flight = 0;
+
     for(int acc_id=0; acc_id<n_acc_stages_cl; acc_id++){
       n_img_in[acc_id] = 0;
       n_img_out[acc_id] = 0;
@@ -186,6 +199,10 @@ void run_benchmark(const int cluster_id, const int core_id) {
       n_tiles_out[acc_id] = 0;
       n_tiles_out_on_flight[acc_id] = 0;
       n_tiles_out_not_checked[acc_id] = 0;
+    }
+
+    for(int i=0; i < n_clusters; i++){
+      n_slv_cl_terminate[i] = 0;
     }
 
     n_img_out_total = 0;
@@ -255,14 +272,76 @@ void run_benchmark(const int cluster_id, const int core_id) {
         } else {
 
           /* Swap buffer ID */
-
+          
           buffer_id = !buffer_id;
 
         }
 
-        for(int acc_id=0; acc_id<n_acc_stages_cl; acc_id++){
+        /* ================================================ */
+        /* Wait for invocation from previous pipeline stage */
+        /* ================================================ */
 
-          /* Input tile */
+        // All clusters but first have to wait for an invocation from their predecessor
+        if(cluster_id > 0){
+        
+          // If this cluster has processed all the images the previous one had pre-processed, then wait for others to be ready
+          // This means that all on-flight processes concerning the pipeline of current cluster are to be terminated
+          // There is a possibility the event is received/read asynchronously, hence to wait won't be necessary
+          if((n_img_prev_cl_ready * l2_n_tiles) == n_tiles_out[n_acc_stages_cl - 1]) {
+          
+            // Expect new invocations only if other images are expected to be processed
+            if (n_img_prev_cl_ready < n_img) {
+
+              #ifdef PRINT_PIPELINE_LOG
+                printf("wait for invocation\n");
+              #endif
+            
+              while(1){
+
+                soc_evt_msg = wait_cmd_eu_sw_evt(cluster_id, cluster_id - 1, CMD_TYPE_CL_START);  /* -- CMD_TYPE: CLUSTER START -- */ 
+                
+                #ifdef PRINT_PIPELINE_LOG
+                  printf("<wait_cmd_eu_sw_evt> - NEW: CL %d received message 0x%08x\n", hero_rt_cluster_id(), soc_evt_msg);
+                #endif
+
+                soc_evt_mst = get_soc_evt_cid(soc_evt_msg); // sender
+                soc_evt_acc = get_soc_evt_aid(soc_evt_msg); // accelerator
+                soc_evt_cmd = get_soc_evt_type(soc_evt_msg); // command
+
+                /* Synchronous command */
+
+                if(soc_evt_cmd == CMD_TYPE_CL_START){
+                  n_img_prev_cl_ready++;
+                  break;
+                
+                /* Asynchronous commands */
+
+                } else if(soc_evt_cmd == CMD_TYPE_DMA_IN_TERMINATE) {
+                  n_img_next_cl_used_on_flight--;
+                  n_img_next_cl_used++;
+                } else if(soc_evt_cmd == CMD_TYPE_DMA_OUT_TERMINATE) {
+                  n_tiles_out_on_flight[soc_evt_acc]--;
+                  n_tiles_out_not_checked[soc_evt_acc]++;
+                } else if(soc_evt_cmd == CMD_TYPE_CL_TERMINATE) {
+                  n_slv_cl_terminate[soc_evt_mst] = soc_evt_mst;
+
+                /* Invalid commands */
+
+                } else {
+                  printf("<CMD_TYPE_CL_START> - ERROR: CL %d sent to CL %d an unexpected command %d\n", soc_evt_mst, hero_rt_cluster_id(), soc_evt_cmd);
+                }
+              
+              }
+
+            }
+
+          }
+
+        }
+
+        /* Input tile */
+
+        for(int acc_id=0; acc_id<n_acc_stages_cl; acc_id++){
 
           // Check that each stage starts after the previous has processed an entire image
           if((!acc_id) || ((acc_id > 0) && (n_img_out[acc_id-1] > n_img_in[acc_id]))){
@@ -281,13 +360,21 @@ void run_benchmark(const int cluster_id, const int core_id) {
 
               // If double buffering, then wait for DMA transfer issued in previous round
               hero_dma_wait(dma_in[buffer_id + 2 * acc_id].job); 
-
+              
               // Count tiles been transferred in for each pipeline stage
               n_tiles_in_on_flight[acc_id]--;
               n_tiles_in[acc_id]++;
 
               // Count images been transferred in for each pipeline stage
               n_img_in[acc_id] = n_tiles_in[acc_id]/l2_n_tiles;
+
+              // Check whether an entire image has been read
+              if(n_tiles_in[acc_id] == (n_img_in[acc_id] * l2_n_tiles)){
+
+                // Notify the stage[i-1] about the successful input DMA transfer, so as to free a buffer from already sunk data
+                send_cmd_eu_sw_evt(cluster_id, cluster_id - 1, acc_id, CMD_TYPE_DMA_IN_TERMINATE);  /* -- CMD_TYPE: DMA IN TERMINATE -- */ 
+              
+              }
 
             }
             
@@ -327,6 +414,12 @@ void run_benchmark(const int cluster_id, const int core_id) {
           /* Wait for pipeline stages */
           /* ======================== */
 
+          // NB: This part of code is a WIP, as:
+          // 1. The use a for loop around acc_id assumes the clusters to be containing the same number of accelerators, but this might not be true in general.
+          // 2. Heterogeneous clusters (with different accelerators) are made by replicating the same acc-rich cluster multiple time and targeting a different
+          //    accelerator per cluster. This means that acc_id is not true ID of the accelerator in the cluster, hence the latter has to be retrieved using the
+          //    macro get_acc_aid().
+
           // Check that each stage starts after a tile is ready in L1 memory
           if(n_tiles_compute_on_flight[acc_id] > 0){
 
@@ -335,8 +428,24 @@ void run_benchmark(const int cluster_id, const int core_id) {
             #endif
 
             // Wait accelerator execution
-            
-            while(!arov_is_finished(&arov, cluster_id, acc_id)){arov_wait_eu(&arov, cluster_id, acc_id);}
+
+            if(cluster_id == get_acc_cid(RGB2HSV_CV_0))
+              while(!arov_is_finished(&arov, cluster_id, get_acc_aid(RGB2HSV_CV_0))){arov_wait_eu(&arov, get_acc_cid(RGB2HSV_CV_0), get_acc_aid(RGB2HSV_CV_0));}
+
+            if(cluster_id == get_acc_cid(THRESHOLD_CV_1))
+              while(!arov_is_finished(&arov, cluster_id, get_acc_aid(THRESHOLD_CV_1))){arov_wait_eu(&arov, get_acc_cid(THRESHOLD_CV_1), get_acc_aid(THRESHOLD_CV_1));}
+
+            if(cluster_id == get_acc_cid(ERODE_CV_2))
+              while(!arov_is_finished(&arov, cluster_id, get_acc_aid(ERODE_CV_2))){arov_wait_eu(&arov, get_acc_cid(ERODE_CV_2), get_acc_aid(ERODE_CV_2));}
+
+            if(cluster_id == get_acc_cid(DILATE_CV_3))
+              while(!arov_is_finished(&arov, cluster_id, get_acc_aid(DILATE_CV_3))){arov_wait_eu(&arov, get_acc_cid(DILATE_CV_3), get_acc_aid(DILATE_CV_3));}
+
+            if(cluster_id == get_acc_cid(DILATE_CV_4))
+              while(!arov_is_finished(&arov, cluster_id, get_acc_aid(DILATE_CV_4))){arov_wait_eu(&arov, get_acc_cid(DILATE_CV_4), get_acc_aid(DILATE_CV_4));}
+
+            if(cluster_id == get_acc_cid(ERODE_CV_5))
+              while(!arov_is_finished(&arov, cluster_id, get_acc_aid(ERODE_CV_5))){arov_wait_eu(&arov, get_acc_cid(ERODE_CV_5), get_acc_aid(ERODE_CV_5));}
 
             n_tiles_compute_on_flight[acc_id]--;
             n_tiles_compute[acc_id]++;
@@ -350,6 +459,14 @@ void run_benchmark(const int cluster_id, const int core_id) {
           /* Run pipeline stages */
           /* =================== */
 
+          // NB: This part of code is a WIP, as:
+          // 1. The use a for loop around acc_id assumes the clusters to be containing the same number of accelerators, but this might not be true in general.
+          // 2. Heterogeneous clusters (with different accelerators) are made by replicating the same acc-rich cluster multiple time and targeting a different
+          //    accelerator per cluster. This means that acc_id is not true ID of the accelerator in the cluster, hence the latter has to be retrieved using the
+          //    macro get_acc_aid().
+
+          // NB: This version of the code works only if each cluster holds a single pipeline stage
+
           // Check that each stage starts after a tile is ready in L1 memory
           if(n_tiles_in[acc_id] > n_tiles_compute[acc_id]){
 
@@ -357,7 +474,23 @@ void run_benchmark(const int cluster_id, const int core_id) {
               printf("compute_start[%d]\n", acc_id);
             #endif
 
-            arov_compute(&arov, cluster_id, acc_id);
+            if(cluster_id == get_acc_cid(RGB2HSV_CV_0))
+              arov_compute(&arov, get_acc_cid(RGB2HSV_CV_0), get_acc_aid(RGB2HSV_CV_0)); 
+
+            if(cluster_id == get_acc_cid(THRESHOLD_CV_1)) 
+              arov_compute(&arov, get_acc_cid(THRESHOLD_CV_1), get_acc_aid(THRESHOLD_CV_1));
+
+            if(cluster_id == get_acc_cid(ERODE_CV_2)) 
+              arov_compute(&arov, get_acc_cid(ERODE_CV_2), get_acc_aid(ERODE_CV_2));
+
+            if(cluster_id == get_acc_cid(DILATE_CV_3)) 
+              arov_compute(&arov, get_acc_cid(DILATE_CV_3), get_acc_aid(DILATE_CV_3));
+
+            if(cluster_id == get_acc_cid(DILATE_CV_4)) 
+              arov_compute(&arov, get_acc_cid(DILATE_CV_4), get_acc_aid(DILATE_CV_4));
+
+            if(cluster_id == get_acc_cid(ERODE_CV_5)) 
+              arov_compute(&arov, get_acc_cid(ERODE_CV_5), get_acc_aid(ERODE_CV_5));
 
             n_tiles_compute_on_flight[acc_id]++;
 
@@ -395,10 +528,20 @@ void run_benchmark(const int cluster_id, const int core_id) {
               if(soc_evt_cmd == CMD_TYPE_DMA_OUT_TERMINATE){
                 break;
 
+              /* Asynchronous commands */
+
+              } else if(soc_evt_cmd == CMD_TYPE_DMA_IN_TERMINATE) {
+                n_img_next_cl_used_on_flight--;
+                n_img_next_cl_used++;
+              } else if(soc_evt_cmd == CMD_TYPE_CL_START){
+                n_img_prev_cl_ready++;
+              } else if(soc_evt_cmd == CMD_TYPE_CL_TERMINATE) {
+                n_slv_cl_terminate[soc_evt_mst] = soc_evt_mst;
+
               /* Invalid commands */
 
               } else {
-                printf("<wait_cmd_eu_sw_evt> - ERROR: CL %d received unexpected command %d\n", hero_rt_cluster_id(), soc_evt_cmd);
+                printf("<CMD_TYPE_DMA_OUT_TERMINATE> - ERROR: CL %d sent to CL %d an unexpected command %d\n", soc_evt_mst, hero_rt_cluster_id(), soc_evt_cmd);
               }
             
             }
@@ -428,7 +571,12 @@ void run_benchmark(const int cluster_id, const int core_id) {
             if(n_tiles_out_on_flight[acc_id] < dma_n_max_tx_on_flight){
 
               // Check whether there is at least one free L2 image buffer before to move data out
-              if((acc_id < (n_acc_stages_cl - 1)) && ((n_img_out[acc_id] - n_img_in[acc_id + 1]) < (l2_n_buffers / 2))){
+              // In case the DMA request comes from the last cluster, then the problem can be ignored
+              if(
+                (cluster_id == (n_clusters / 2) - 1)
+                || (((acc_id == (n_acc_stages_cl - 1)) && ((n_img_out[acc_id] - n_img_next_cl_used) < (l2_n_buffers / 2)))
+                || ((acc_id < (n_acc_stages_cl - 1)) && ((n_img_out[acc_id] - n_img_in[acc_id + 1]) < (l2_n_buffers / 2))))
+              ){
 
                 #ifdef PRINT_PIPELINE_LOG
                   printf("dma_out_tx[%d]\n", acc_id);
@@ -443,6 +591,93 @@ void run_benchmark(const int cluster_id, const int core_id) {
 
             }
 
+          }
+
+          /* ========================================================== */
+          /* Wait for next cluster to terminate on-flight image reading */
+          /* ========================================================== */
+
+          // All clusters but last have to wait for their next to read all the buffered image
+          if(cluster_id < ((n_clusters/2) - 1)){
+
+            // If both L2 output image buffers are still to be read by next cluster, then current stalls
+            // Also, if It's the last image and are still on-flight images, wait for events in order to sink them all
+            if (((n_img_out[n_acc_stages_cl - 1] - n_img_next_cl_used) == (l2_n_buffers / 2)) 
+              || ((n_img_next_cl_used_on_flight > 0) && (n_img_out[n_acc_stages_cl - 1] >= (n_img - 1)))
+            ){
+
+              #ifdef PRINT_PIPELINE_LOG
+                printf("wait for next cl to read image\n");
+              #endif
+
+              while(1){
+
+                soc_evt_msg = wait_cmd_eu_sw_evt(cluster_id, cluster_id - 1, CMD_TYPE_DMA_IN_TERMINATE);  /* -- CMD_TYPE: CLUSTER START -- */ 
+                
+                #ifdef PRINT_PIPELINE_LOG
+                  printf("<wait_cmd_eu_sw_evt> - NEW: CL %d received message 0x%08x\n", hero_rt_cluster_id(), soc_evt_msg);
+                #endif
+
+                soc_evt_mst = get_soc_evt_cid(soc_evt_msg); // sender
+                soc_evt_acc = get_soc_evt_aid(soc_evt_msg); // accelerator
+                soc_evt_cmd = get_soc_evt_type(soc_evt_msg); // command
+
+                /* Synchronous command */
+
+                if(soc_evt_cmd == CMD_TYPE_DMA_IN_TERMINATE){
+                  n_img_next_cl_used_on_flight--;
+                  n_img_next_cl_used++;
+                  break;
+
+                /* Asynchronous commands */
+
+                } else if(soc_evt_cmd == CMD_TYPE_DMA_OUT_TERMINATE) {
+                  n_tiles_out_on_flight[soc_evt_acc]--;
+                  n_tiles_out_not_checked[soc_evt_acc]++;
+                } else if(soc_evt_cmd == CMD_TYPE_CL_START){
+                  n_img_prev_cl_ready++;
+                } else if(soc_evt_cmd == CMD_TYPE_CL_TERMINATE) {
+                  n_slv_cl_terminate[soc_evt_mst] = soc_evt_mst;
+
+                /* Invalid commands */
+
+                } else {
+                  printf("<CMD_TYPE_DMA_IN_TERMINATE> - ERROR: CL %d sent to CL %d an unexpected command %d\n", soc_evt_mst, hero_rt_cluster_id(), soc_evt_cmd);
+                }
+              
+              }
+
+            }
+
+          }
+
+          /* =========================== */
+          /* Wake up next pipeline stage */
+          /* =========================== */
+
+          // Once this cluster terminates processing an image, It invokes the sucessive one.
+          // The processing a cluster performs on an image is partial because each cluster integrates a different 
+          // part of the whole accelerator-rich pipeline.
+
+          // All clusters but last can invoke their successor
+          if(cluster_id < ((n_clusters/2) - 1)){
+
+            // Check whether the next cluster has already been informed about the output image to be ready
+            if (n_img_out[n_acc_stages_cl - 1] > (n_img_next_cl_used + n_img_next_cl_used_on_flight)){
+
+              // Check whether the next cluster has a free L2 buffer for the new image to be processed
+              if((n_img_next_cl_used_on_flight) < (l2_n_buffers / 2)){
+
+                #ifdef PRINT_PIPELINE_LOG
+                  printf("wake up next cluster\n");
+                #endif
+
+                send_cmd_eu_sw_evt(cluster_id, cluster_id + 1, 0, CMD_TYPE_CL_START);  /* -- CMD_TYPE: CLUSTER START -- */ 
+
+                n_img_next_cl_used_on_flight++;
+              
+              }
+            }
           }
 
         }
@@ -473,7 +708,7 @@ void run_benchmark(const int cluster_id, const int core_id) {
           /* Invalid commands */
 
           } else {
-            printf("<wait_cmd_eu_sw_evt> - ERROR: CL %d received unexpected command %d\n", hero_rt_cluster_id(), soc_evt_cmd);
+            printf("<CMD_TYPE_DMA_OUT_START> - ERROR: CL %d sent to CL %d an unexpected command %d\n", soc_evt_mst, hero_rt_cluster_id(), soc_evt_cmd);
           }
         
         }
@@ -513,10 +748,14 @@ void run_benchmark(const int cluster_id, const int core_id) {
 
     /* ===================================================================== */
 
+    #ifdef PRINT_PIPELINE_LOG
+      printf("...THE END\n");
+    #endif
+
     /* MEASUREMENT - END */
 
     // Cluster synchronization barrier
-    cluster_barrier_all_eu_soc_evt(cluster_id, 0, 0xFFFFFFFF);
+    cluster_barrier_all_eu_soc_evt(cluster_id, 0, n_slv_cl_terminate);
 
     // Cluster timer
     if(!cluster_id) t_experiment_sys_pov.cnt_1 = hero_get_clk_counter();
