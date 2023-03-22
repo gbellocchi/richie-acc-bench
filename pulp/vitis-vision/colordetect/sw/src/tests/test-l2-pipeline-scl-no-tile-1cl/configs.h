@@ -21,8 +21,8 @@
  * DSE parameters --> Benchmark
  * ===================================================================== */
 
-#define BENCHMARK_NAME "test-l2-pipeline-mcl-no-tile-21cl"
-#define BENCHMARK_TYPE L2_PIPELINE_MCL_NO_TILE // See list_benchmarks.h
+#define BENCHMARK_NAME "test-l2-pipeline-scl-no-tile-1cl"
+#define BENCHMARK_TYPE L2_PIPELINE_SCL_NO_TILE // See list_benchmarks.h
 
 /* =====================================================================
  * DSE parameters --> Application
