@@ -114,63 +114,63 @@ static inline void arov_swap_buffers_color_detect(
 
     arov->rgb2hsv_cv_0_0.img_in.tcdm.ptr = l1_img[1]; 
     arov->rgb2hsv_cv_0_0.img_out.tcdm.ptr = l1_img[3]; 
-    arov_update_buffer_addr(arov, get_cid(RGB2HSV_CV_0), get_aid(RGB2HSV_CV_0));
+    arov_update_buffer_addr(arov, get_acc_cid(RGB2HSV_CV_0), get_acc_aid(RGB2HSV_CV_0));
 
     // Swap buffer pointers for THRESHOLD_CV
     arov->threshold_cv_0_1.img_in.tcdm.ptr = l1_img[1]; 
     arov->threshold_cv_0_1.img_out.tcdm.ptr = l1_img[3]; 
-    arov_update_buffer_addr(arov, get_cid(THRESHOLD_CV_1), get_aid(THRESHOLD_CV_1));
+    arov_update_buffer_addr(arov, get_acc_cid(THRESHOLD_CV_1), get_acc_aid(THRESHOLD_CV_1));
 
     // Swap buffer pointers for ERODE_CV
     arov->erode_cv_0_2.img_in.tcdm.ptr = l1_img[1]; 
     arov->erode_cv_0_2.img_out.tcdm.ptr = l1_img[3]; 
-    arov_update_buffer_addr(arov, get_cid(ERODE_CV_2), get_aid(ERODE_CV_2));
+    arov_update_buffer_addr(arov, get_acc_cid(ERODE_CV_2), get_acc_aid(ERODE_CV_2));
 
     // Swap buffer pointers for DILATE_CV
     arov->dilate_cv_0_3.img_in.tcdm.ptr = l1_img[1]; 
     arov->dilate_cv_0_3.img_out.tcdm.ptr = l1_img[3]; 
-    arov_update_buffer_addr(arov, get_cid(DILATE_CV_3), get_aid(DILATE_CV_3));
+    arov_update_buffer_addr(arov, get_acc_cid(DILATE_CV_3), get_acc_aid(DILATE_CV_3));
     
     // Swap buffer pointers for DILATE_CV
     arov->dilate_cv_0_4.img_in.tcdm.ptr = l1_img[1]; 
     arov->dilate_cv_0_4.img_out.tcdm.ptr = l1_img[3]; 
-    arov_update_buffer_addr(arov, get_cid(DILATE_CV_4), get_aid(DILATE_CV_4));
+    arov_update_buffer_addr(arov, get_acc_cid(DILATE_CV_4), get_acc_aid(DILATE_CV_4));
 
     // Swap buffer pointers for DILATE_CV
     arov->erode_cv_0_5.img_in.tcdm.ptr = l1_img[1]; 
     arov->erode_cv_0_5.img_out.tcdm.ptr = l1_img[3]; 
-    arov_update_buffer_addr(arov, get_cid(ERODE_CV_5), get_aid(ERODE_CV_5));
+    arov_update_buffer_addr(arov, get_acc_cid(ERODE_CV_5), get_acc_aid(ERODE_CV_5));
   
   } else { // buffer_id == 0
 
     arov->rgb2hsv_cv_0_0.img_in.tcdm.ptr = l1_img[0]; 
     arov->rgb2hsv_cv_0_0.img_out.tcdm.ptr = l1_img[2]; 
-    arov_update_buffer_addr(arov, get_cid(RGB2HSV_CV_0), get_aid(RGB2HSV_CV_0));
+    arov_update_buffer_addr(arov, get_acc_cid(RGB2HSV_CV_0), get_acc_aid(RGB2HSV_CV_0));
 
     // Swap buffer pointers for THRESHOLD_CV
     arov->threshold_cv_0_1.img_in.tcdm.ptr = l1_img[0]; 
     arov->threshold_cv_0_1.img_out.tcdm.ptr = l1_img[2]; 
-    arov_update_buffer_addr(arov, get_cid(THRESHOLD_CV_1), get_aid(THRESHOLD_CV_1));
+    arov_update_buffer_addr(arov, get_acc_cid(THRESHOLD_CV_1), get_acc_aid(THRESHOLD_CV_1));
 
     // Swap buffer pointers for ERODE_CV
     arov->erode_cv_0_2.img_in.tcdm.ptr = l1_img[0]; 
     arov->erode_cv_0_2.img_out.tcdm.ptr = l1_img[2]; 
-    arov_update_buffer_addr(arov, get_cid(ERODE_CV_2), get_aid(ERODE_CV_2));
+    arov_update_buffer_addr(arov, get_acc_cid(ERODE_CV_2), get_acc_aid(ERODE_CV_2));
 
     // Swap buffer pointers for DILATE_CV
     arov->dilate_cv_0_3.img_in.tcdm.ptr = l1_img[0]; 
     arov->dilate_cv_0_3.img_out.tcdm.ptr = l1_img[2]; 
-    arov_update_buffer_addr(arov, get_cid(DILATE_CV_3), get_aid(DILATE_CV_3));
+    arov_update_buffer_addr(arov, get_acc_cid(DILATE_CV_3), get_acc_aid(DILATE_CV_3));
     
     // Swap buffer pointers for DILATE_CV
     arov->dilate_cv_0_4.img_in.tcdm.ptr = l1_img[0]; 
     arov->dilate_cv_0_4.img_out.tcdm.ptr = l1_img[2]; 
-    arov_update_buffer_addr(arov, get_cid(DILATE_CV_4), get_aid(DILATE_CV_4));
+    arov_update_buffer_addr(arov, get_acc_cid(DILATE_CV_4), get_acc_aid(DILATE_CV_4));
 
     // Swap buffer pointers for DILATE_CV
     arov->erode_cv_0_5.img_in.tcdm.ptr = l1_img[0]; 
     arov->erode_cv_0_5.img_out.tcdm.ptr = l1_img[2]; 
-    arov_update_buffer_addr(arov, get_cid(ERODE_CV_5), get_aid(ERODE_CV_5));
+    arov_update_buffer_addr(arov, get_acc_cid(ERODE_CV_5), get_acc_aid(ERODE_CV_5));
 
   }
 };

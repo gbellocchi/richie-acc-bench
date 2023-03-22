@@ -15,56 +15,53 @@
 #ifndef __CONFIGS_H__
 #define __CONFIGS_H__
 
+#include <list_benchmarks.h>
+
 /* =====================================================================
  * DSE parameters --> Benchmark
  * ===================================================================== */
 
-// #define _profile_l1_baseline_
-// #define _profile_l1_pipeline_
-// #define _profile_l2_baseline_
-// #define _profile_l2_pipeline_single_cl_
-#define _profile_l2_pipeline_multi_cl_
-
-#define _implement_const_single_buffer_
-// #define _implement_variable_multi_buffer_
+#define BENCHMARK_NAME "l2-pipeline-scl-no-tile-16l1p-1l2p-256x256-8img"
+#define BENCHMARK_TYPE L2_PIPELINE_MCL_NO_TILE // See list_benchmarks.h
 
 /* =====================================================================
  * DSE parameters --> Application
  * ===================================================================== */
 
 // Macros for retrieving accelerator integration information
-#define get_cid(val)     ((0x000000FF) & (val >> 0))
-#define get_aid(val)     ((0x000000FF) & (val >> 8))
-#define get_type(val)    ((0x000000FF) & (val >> 16))
+#define get_acc_cid(val)        ((0x000000FF) & (val >> 0))
+#define get_acc_aid(val)        ((0x000000FF) & (val >> 8))
+#define get_type(val)           ((0x000000FF) & (val >> 16))
 
-#define codify_cid(val) (val << 0)
-#define codify_aid(val) (val << 8)
-#define codify_type(val) (val << 16)
+#define codify_cid(val)         (val << 0)
+#define codify_aid(val)         (val << 8)
+#define codify_type(val)        (val << 16)
 
-#define my_acc(cid, aid, type) (codify_cid(cid) + codify_aid(aid) + codify_type(type))
+#define my_acc(cid, aid, type) (codify_acc_cid(cid) + codify_acc_aid(aid) + codify_acc_type(type))
 
 // Accelerator integration information
 #define RGB2HSV_CV_0      my_acc(0, 0, RGB2HSV_CV)
-#define THRESHOLD_CV_1    my_acc(1, 1, THRESHOLD_CV)
-#define ERODE_CV_2        my_acc(2, 2, ERODE_CV)
-#define DILATE_CV_3       my_acc(3, 3, DILATE_CV)
-#define DILATE_CV_4       my_acc(4, 4, DILATE_CV)
-#define ERODE_CV_5        my_acc(5, 5, ERODE_CV)
+#define THRESHOLD_CV_1    my_acc(0, 1, THRESHOLD_CV)
+#define ERODE_CV_2        my_acc(0, 2, ERODE_CV)
+#define DILATE_CV_3       my_acc(0, 3, DILATE_CV)
+#define DILATE_CV_4       my_acc(0, 4, DILATE_CV)
+#define ERODE_CV_5        my_acc(0, 5, ERODE_CV)
 
 /* =====================================================================
  * DSE parameters --> System
  * ===================================================================== */
 
 // System architecture
-#define n_clusters                          12 // 6 accelerator-rich + 6 to mimic bi-directional DMA
+#define n_clusters                          2 // 1 accelerator-rich + 1 to mimic bi-directional DMA
 
 // Accelerator-rich
 #define n_acc_total                         6
 #define n_acc_active                        n_acc_total
-#define n_acc_stages                        6 // Total number of processing stages
+#define n_acc_stages                        n_acc_total // Total number of processing stages
+#define n_acc_stages_cl                     ((int) (n_acc_stages) / (((int) (n_clusters) / (2)))) // Total number of processing stages per cluster
 
 // Application
-#define n_img                               4 // Number of input images to be processed
+#define n_img                               8 // Number of input images to be processed
 #define img_rows                            512 
 #define img_cols                            512 
 #define img_dim                             img_rows * img_cols
@@ -122,6 +119,7 @@
 // - DMA 
 #define dma_payload_dim                     l1_img_tile // Payload dimension
 #define dma_n_tx                            l1_n_buffer_reps // Number of transfers, designed on L1=128kB (real)
+#define dma_n_max_tx_on_flight              2 // Depends which buffering scheme is used (single: 1, double: 2)
 
 // Event unit
 #define max_num_sw_evt                      8
