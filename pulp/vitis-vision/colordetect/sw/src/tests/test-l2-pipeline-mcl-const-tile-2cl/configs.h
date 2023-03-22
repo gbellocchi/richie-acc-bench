@@ -31,11 +31,11 @@
 #define get_acc_aid(val)     ((0x000000FF) & (val >> 8))
 #define get_type(val)    ((0x000000FF) & (val >> 16))
 
-#define codify_cid(val) (val << 0)
-#define codify_aid(val) (val << 8)
-#define codify_type(val) (val << 16)
+#define codify_acc_cid(val) (val << 0)
+#define codify_acc_aid(val) (val << 8)
+#define codify_acc_type(val) (val << 16)
 
-#define my_acc(cid, aid, type) (codify_cid(cid) + codify_aid(aid) + codify_type(type))
+#define my_acc(cid, aid, type) (codify_acc_cid(cid) + codify_acc_aid(aid) + codify_acc_type(type))
 
 // Accelerator integration information
 #define RGB2HSV_CV_0      my_acc(0, 0, RGB2HSV_CV)
