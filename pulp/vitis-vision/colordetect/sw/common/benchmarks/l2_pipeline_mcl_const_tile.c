@@ -1,10 +1,10 @@
 /* =====================================================================
  * Project:      Color detect
- * Title:        run_l2_pipeline_const_buffer.c
- * Description:  Implementation of an accelerator-rich vision pipeline 
- *               in a PULP cluster. Each accelerator is given a constant
- *               buffer dimension, even when spreading accelerators in 
- *               different clusters. This means the L1 dimension is 
+ * Title:        l2_pipeline_mcl_const_tile.c
+ * Description:  Implementation of a multi-cluster accelerator-rich vision  
+ *               pipeline using PULP clusters. Each accelerator is given a 
+ *               constant buffer dimension, even when spreading accelerators  
+ *               in different clusters. This means the L1 dimension is 
  *               homogeneously distributed when scaling at multi-cluster,
  *               with no increase in size at system-level.
  *
@@ -18,15 +18,16 @@
  */
 
 #include <configs.h>
+#include <list_benchmarks.h>
 
-#if defined(_profile_l2_pipeline_multi_cl_) && defined(_implement_const_single_buffer_) 
+#if (BENCHMARK_TYPE == L2_PIPELINE_MCL_CONST_TILE)
 
 #include <experiment.h>
 #include <cluster_synch.h>
 
 #include <stimuli.h>
 
-void run_l2_pipeline(const int cluster_id, const int core_id) {
+void run_benchmark(const int cluster_id, const int core_id) {
 
   /* Runtime IDs */
 
@@ -187,51 +188,51 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
             /* Program accelerators */
 
             // -- RGB2HSV_CV_0 
-            if(cluster_id == get_cid(RGB2HSV_CV_0)){
-              arov_init(&arov, get_cid(RGB2HSV_CV_0), get_aid(RGB2HSV_CV_0));
-              arov_map_params_color_detect(&arov, get_cid(RGB2HSV_CV_0), get_aid(RGB2HSV_CV_0), l1_img[0], l1_img[2], l1_buffer_dim);
-              offload_id[get_aid(RGB2HSV_CV_0)] = arov_activate(&arov, get_cid(RGB2HSV_CV_0), get_aid(RGB2HSV_CV_0));
-              arov_program(&arov, get_cid(RGB2HSV_CV_0), get_aid(RGB2HSV_CV_0));
+            if(cluster_id == get_acc_cid(RGB2HSV_CV_0)){
+              arov_init(&arov, get_acc_cid(RGB2HSV_CV_0), get_aid(RGB2HSV_CV_0));
+              arov_map_params_color_detect(&arov, get_acc_cid(RGB2HSV_CV_0), get_aid(RGB2HSV_CV_0), l1_img[0], l1_img[2], l1_buffer_dim);
+              offload_id[get_aid(RGB2HSV_CV_0)] = arov_activate(&arov, get_acc_cid(RGB2HSV_CV_0), get_aid(RGB2HSV_CV_0));
+              arov_program(&arov, get_acc_cid(RGB2HSV_CV_0), get_aid(RGB2HSV_CV_0));
             }
 
             // -- THRESHOLD_CV_1 
-            if(cluster_id == get_cid(THRESHOLD_CV_1)){
-              arov_init(&arov, get_cid(THRESHOLD_CV_1), get_aid(THRESHOLD_CV_1));
-              arov_map_params_color_detect(&arov, get_cid(THRESHOLD_CV_1), get_aid(THRESHOLD_CV_1), l1_img[0], l1_img[2], l1_buffer_dim);
-              offload_id[get_aid(THRESHOLD_CV_1)] = arov_activate(&arov, get_cid(THRESHOLD_CV_1), get_aid(THRESHOLD_CV_1));
-              arov_program(&arov, get_cid(THRESHOLD_CV_1), get_aid(THRESHOLD_CV_1));
+            if(cluster_id == get_acc_cid(THRESHOLD_CV_1)){
+              arov_init(&arov, get_acc_cid(THRESHOLD_CV_1), get_aid(THRESHOLD_CV_1));
+              arov_map_params_color_detect(&arov, get_acc_cid(THRESHOLD_CV_1), get_aid(THRESHOLD_CV_1), l1_img[0], l1_img[2], l1_buffer_dim);
+              offload_id[get_aid(THRESHOLD_CV_1)] = arov_activate(&arov, get_acc_cid(THRESHOLD_CV_1), get_aid(THRESHOLD_CV_1));
+              arov_program(&arov, get_acc_cid(THRESHOLD_CV_1), get_aid(THRESHOLD_CV_1));
             }
               
             // -- ERODE_CV_2
-            if(cluster_id == get_cid(ERODE_CV_2)){
-              arov_init(&arov, get_cid(ERODE_CV_2),   get_aid(ERODE_CV_2));
-              arov_map_params_color_detect(&arov, get_cid(ERODE_CV_2), get_aid(ERODE_CV_2), l1_img[0], l1_img[2], l1_buffer_dim);
-              offload_id[get_aid(ERODE_CV_2)] = arov_activate(&arov, get_cid(ERODE_CV_2), get_aid(ERODE_CV_2));
-              arov_program(&arov, get_cid(ERODE_CV_2), get_aid(ERODE_CV_2));
+            if(cluster_id == get_acc_cid(ERODE_CV_2)){
+              arov_init(&arov, get_acc_cid(ERODE_CV_2),   get_aid(ERODE_CV_2));
+              arov_map_params_color_detect(&arov, get_acc_cid(ERODE_CV_2), get_aid(ERODE_CV_2), l1_img[0], l1_img[2], l1_buffer_dim);
+              offload_id[get_aid(ERODE_CV_2)] = arov_activate(&arov, get_acc_cid(ERODE_CV_2), get_aid(ERODE_CV_2));
+              arov_program(&arov, get_acc_cid(ERODE_CV_2), get_aid(ERODE_CV_2));
             }
 
             // -- DILATE_CV_3
-            if(cluster_id == get_cid(DILATE_CV_3)){
-              arov_init(&arov, get_cid(DILATE_CV_3),  get_aid(DILATE_CV_3));
-              arov_map_params_color_detect(&arov, get_cid(DILATE_CV_3), get_aid(DILATE_CV_3), l1_img[0], l1_img[2], l1_buffer_dim);
-              offload_id[get_aid(DILATE_CV_3)] = arov_activate(&arov, get_cid(DILATE_CV_3), get_aid(DILATE_CV_3));
-              arov_program(&arov, get_cid(DILATE_CV_3), get_aid(DILATE_CV_3));
+            if(cluster_id == get_acc_cid(DILATE_CV_3)){
+              arov_init(&arov, get_acc_cid(DILATE_CV_3),  get_aid(DILATE_CV_3));
+              arov_map_params_color_detect(&arov, get_acc_cid(DILATE_CV_3), get_aid(DILATE_CV_3), l1_img[0], l1_img[2], l1_buffer_dim);
+              offload_id[get_aid(DILATE_CV_3)] = arov_activate(&arov, get_acc_cid(DILATE_CV_3), get_aid(DILATE_CV_3));
+              arov_program(&arov, get_acc_cid(DILATE_CV_3), get_aid(DILATE_CV_3));
             }
 
             // -- DILATE_CV_4
-            if(cluster_id == get_cid(DILATE_CV_4)){
-              arov_init(&arov, get_cid(DILATE_CV_4),  get_aid(DILATE_CV_4));
-              arov_map_params_color_detect(&arov, get_cid(DILATE_CV_4), get_aid(DILATE_CV_4), l1_img[0], l1_img[2], l1_buffer_dim);
-              offload_id[get_aid(DILATE_CV_4)] = arov_activate(&arov, get_cid(DILATE_CV_4), get_aid(DILATE_CV_4));
-              arov_program(&arov, get_cid(DILATE_CV_4), get_aid(DILATE_CV_4));
+            if(cluster_id == get_acc_cid(DILATE_CV_4)){
+              arov_init(&arov, get_acc_cid(DILATE_CV_4),  get_aid(DILATE_CV_4));
+              arov_map_params_color_detect(&arov, get_acc_cid(DILATE_CV_4), get_aid(DILATE_CV_4), l1_img[0], l1_img[2], l1_buffer_dim);
+              offload_id[get_aid(DILATE_CV_4)] = arov_activate(&arov, get_acc_cid(DILATE_CV_4), get_aid(DILATE_CV_4));
+              arov_program(&arov, get_acc_cid(DILATE_CV_4), get_aid(DILATE_CV_4));
             }
 
             // -- ERODE_CV_5
-            if(cluster_id == get_cid(ERODE_CV_5)){
-              arov_init(&arov, get_cid(ERODE_CV_5),   get_aid(ERODE_CV_5));
-              arov_map_params_color_detect(&arov, get_cid(ERODE_CV_5), get_aid(ERODE_CV_5), l1_img[0], l1_img[2], l1_buffer_dim);  
-              offload_id[get_aid(ERODE_CV_5)] = arov_activate(&arov, get_cid(ERODE_CV_5), get_aid(ERODE_CV_5));
-              arov_program(&arov, get_cid(ERODE_CV_5), get_aid(ERODE_CV_5));
+            if(cluster_id == get_acc_cid(ERODE_CV_5)){
+              arov_init(&arov, get_acc_cid(ERODE_CV_5),   get_aid(ERODE_CV_5));
+              arov_map_params_color_detect(&arov, get_acc_cid(ERODE_CV_5), get_aid(ERODE_CV_5), l1_img[0], l1_img[2], l1_buffer_dim);  
+              offload_id[get_aid(ERODE_CV_5)] = arov_activate(&arov, get_acc_cid(ERODE_CV_5), get_aid(ERODE_CV_5));
+              arov_program(&arov, get_acc_cid(ERODE_CV_5), get_aid(ERODE_CV_5));
             }
 
           } else {
@@ -288,23 +289,23 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
 
           /* Run pipeline stages */
 
-          if(cluster_id == get_cid(RGB2HSV_CV_0)) 
-            arov_compute(&arov, get_cid(RGB2HSV_CV_0), get_aid(RGB2HSV_CV_0)); 
+          if(cluster_id == get_acc_cid(RGB2HSV_CV_0)) 
+            arov_compute(&arov, get_acc_cid(RGB2HSV_CV_0), get_aid(RGB2HSV_CV_0)); 
 
-          if(cluster_id == get_cid(THRESHOLD_CV_1)) 
-            arov_compute(&arov, get_cid(THRESHOLD_CV_1), get_aid(THRESHOLD_CV_1));
+          if(cluster_id == get_acc_cid(THRESHOLD_CV_1)) 
+            arov_compute(&arov, get_acc_cid(THRESHOLD_CV_1), get_aid(THRESHOLD_CV_1));
 
-          if(cluster_id == get_cid(ERODE_CV_2)) 
-            arov_compute(&arov, get_cid(ERODE_CV_2), get_aid(ERODE_CV_2));
+          if(cluster_id == get_acc_cid(ERODE_CV_2)) 
+            arov_compute(&arov, get_acc_cid(ERODE_CV_2), get_aid(ERODE_CV_2));
 
-          if(cluster_id == get_cid(DILATE_CV_3)) 
-            arov_compute(&arov, get_cid(DILATE_CV_3), get_aid(DILATE_CV_3));
+          if(cluster_id == get_acc_cid(DILATE_CV_3)) 
+            arov_compute(&arov, get_acc_cid(DILATE_CV_3), get_aid(DILATE_CV_3));
 
-          if(cluster_id == get_cid(DILATE_CV_4)) 
-            arov_compute(&arov, get_cid(DILATE_CV_4), get_aid(DILATE_CV_4));
+          if(cluster_id == get_acc_cid(DILATE_CV_4)) 
+            arov_compute(&arov, get_acc_cid(DILATE_CV_4), get_aid(DILATE_CV_4));
 
-          if(cluster_id == get_cid(ERODE_CV_5)) 
-            arov_compute(&arov, get_cid(ERODE_CV_5), get_aid(ERODE_CV_5));
+          if(cluster_id == get_acc_cid(ERODE_CV_5)) 
+            arov_compute(&arov, get_acc_cid(ERODE_CV_5), get_aid(ERODE_CV_5));
 
           /* Program input DMA for next round */
 
@@ -322,12 +323,12 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
           /* Wait for final stage, then transfer output tile to L2 */
 
           switch (cluster_id){
-            case get_cid(RGB2HSV_CV_0): while(!arov_is_finished(&arov, cluster_id, get_aid(RGB2HSV_CV_0))){arov_wait_eu(&arov, cluster_id, get_aid(RGB2HSV_CV_0));} break;
-            case get_cid(THRESHOLD_CV_1): while(!arov_is_finished(&arov, cluster_id, get_aid(THRESHOLD_CV_1))){arov_wait_eu(&arov, cluster_id, get_aid(THRESHOLD_CV_1));} break;
-            case get_cid(ERODE_CV_2): while(!arov_is_finished(&arov, cluster_id, get_aid(ERODE_CV_2))){arov_wait_eu(&arov, cluster_id, get_aid(ERODE_CV_2));} break;
-            case get_cid(DILATE_CV_3): while(!arov_is_finished(&arov, cluster_id, get_aid(DILATE_CV_3))){arov_wait_eu(&arov, cluster_id, get_aid(DILATE_CV_3));} break;
-            case get_cid(DILATE_CV_4): while(!arov_is_finished(&arov, cluster_id, get_aid(DILATE_CV_4))){arov_wait_eu(&arov, cluster_id, get_aid(DILATE_CV_4));} break;
-            case get_cid(ERODE_CV_5): while(!arov_is_finished(&arov, cluster_id, get_aid(ERODE_CV_5))){arov_wait_eu(&arov, cluster_id, get_aid(ERODE_CV_5));} break;
+            case get_acc_cid(RGB2HSV_CV_0): while(!arov_is_finished(&arov, cluster_id, get_aid(RGB2HSV_CV_0))){arov_wait_eu(&arov, cluster_id, get_aid(RGB2HSV_CV_0));} break;
+            case get_acc_cid(THRESHOLD_CV_1): while(!arov_is_finished(&arov, cluster_id, get_aid(THRESHOLD_CV_1))){arov_wait_eu(&arov, cluster_id, get_aid(THRESHOLD_CV_1));} break;
+            case get_acc_cid(ERODE_CV_2): while(!arov_is_finished(&arov, cluster_id, get_aid(ERODE_CV_2))){arov_wait_eu(&arov, cluster_id, get_aid(ERODE_CV_2));} break;
+            case get_acc_cid(DILATE_CV_3): while(!arov_is_finished(&arov, cluster_id, get_aid(DILATE_CV_3))){arov_wait_eu(&arov, cluster_id, get_aid(DILATE_CV_3));} break;
+            case get_acc_cid(DILATE_CV_4): while(!arov_is_finished(&arov, cluster_id, get_aid(DILATE_CV_4))){arov_wait_eu(&arov, cluster_id, get_aid(DILATE_CV_4));} break;
+            case get_acc_cid(ERODE_CV_5): while(!arov_is_finished(&arov, cluster_id, get_aid(ERODE_CV_5))){arov_wait_eu(&arov, cluster_id, get_aid(ERODE_CV_5));} break;
           }
           
           /* Transfer output tile to L2 */
@@ -402,7 +403,7 @@ void run_l2_pipeline(const int cluster_id, const int core_id) {
       // Experiment
       0, 
       job_id, 
-      "run_l2_pipeline", 
+      BENCHMARK_NAME, 
       // Cache
       &reg_hit,
       &reg_trns, 
