@@ -142,89 +142,89 @@ static inline void arov_swap_buffers_color_detect(
   if(buffer_id){ // buffer_id == 1
 
     // Swap buffer pointers for RGB2HSV_CV
-    if(cluster_id == get_cid(RGB2HSV_CV_0)){
+    if(cluster_id == get_acc_cid(RGB2HSV_CV_0)){
       arov->rgb2hsv_cv_0_0.img_in.tcdm.ptr = l1_img[1]; 
       arov->rgb2hsv_cv_0_0.img_out.tcdm.ptr = l1_img[3]; 
-      arov_update_buffer_addr(arov, get_cid(RGB2HSV_CV_0), get_aid(RGB2HSV_CV_0));
+      arov_update_buffer_addr(arov, get_acc_cid(RGB2HSV_CV_0), get_acc_aid(RGB2HSV_CV_0));
     }
 
     // Swap buffer pointers for THRESHOLD_CV
-    if(cluster_id == get_cid(THRESHOLD_CV_1)){
+    if(cluster_id == get_acc_cid(THRESHOLD_CV_1)){
       arov->threshold_cv_1_1.img_in.tcdm.ptr = l1_img[1]; 
       arov->threshold_cv_1_1.img_out.tcdm.ptr = l1_img[3]; 
-      arov_update_buffer_addr(arov, get_cid(THRESHOLD_CV_1), get_aid(THRESHOLD_CV_1));
+      arov_update_buffer_addr(arov, get_acc_cid(THRESHOLD_CV_1), get_acc_aid(THRESHOLD_CV_1));
     }
 
     // Swap buffer pointers for ERODE_CV
-    if(cluster_id == get_cid(ERODE_CV_2)){
+    if(cluster_id == get_acc_cid(ERODE_CV_2)){
       arov->erode_cv_2_2.img_in.tcdm.ptr = l1_img[1]; 
       arov->erode_cv_2_2.img_out.tcdm.ptr = l1_img[3]; 
-      arov_update_buffer_addr(arov, get_cid(ERODE_CV_2), get_aid(ERODE_CV_2));
+      arov_update_buffer_addr(arov, get_acc_cid(ERODE_CV_2), get_acc_aid(ERODE_CV_2));
     }
 
     // Swap buffer pointers for DILATE_CV
-    if(cluster_id == get_cid(DILATE_CV_3)){
+    if(cluster_id == get_acc_cid(DILATE_CV_3)){
       arov->dilate_cv_3_3.img_in.tcdm.ptr = l1_img[1]; 
       arov->dilate_cv_3_3.img_out.tcdm.ptr = l1_img[3]; 
-      arov_update_buffer_addr(arov, get_cid(DILATE_CV_3), get_aid(DILATE_CV_3));
+      arov_update_buffer_addr(arov, get_acc_cid(DILATE_CV_3), get_acc_aid(DILATE_CV_3));
     }
     
     // Swap buffer pointers for DILATE_CV
-    if(cluster_id == get_cid(DILATE_CV_4)){
+    if(cluster_id == get_acc_cid(DILATE_CV_4)){
       arov->dilate_cv_4_4.img_in.tcdm.ptr = l1_img[1]; 
       arov->dilate_cv_4_4.img_out.tcdm.ptr = l1_img[3]; 
-      arov_update_buffer_addr(arov, get_cid(DILATE_CV_4), get_aid(DILATE_CV_4));
+      arov_update_buffer_addr(arov, get_acc_cid(DILATE_CV_4), get_acc_aid(DILATE_CV_4));
     }
 
     // Swap buffer pointers for DILATE_CV
-    if(cluster_id == get_cid(ERODE_CV_5)){
+    if(cluster_id == get_acc_cid(ERODE_CV_5)){
       arov->erode_cv_5_5.img_in.tcdm.ptr = l1_img[1]; 
       arov->erode_cv_5_5.img_out.tcdm.ptr = l1_img[3]; 
-      arov_update_buffer_addr(arov, get_cid(ERODE_CV_5), get_aid(ERODE_CV_5));
+      arov_update_buffer_addr(arov, get_acc_cid(ERODE_CV_5), get_acc_aid(ERODE_CV_5));
     }
   
   } else { // buffer_id == 0
 
     // Swap buffer pointers for RGB2HSV_CV
-    if(cluster_id == get_cid(RGB2HSV_CV_0)){
+    if(cluster_id == get_acc_cid(RGB2HSV_CV_0)){
       arov->rgb2hsv_cv_0_0.img_in.tcdm.ptr = l1_img[0]; 
       arov->rgb2hsv_cv_0_0.img_out.tcdm.ptr = l1_img[2]; 
-      arov_update_buffer_addr(arov, get_cid(RGB2HSV_CV_0), get_aid(RGB2HSV_CV_0));
+      arov_update_buffer_addr(arov, get_acc_cid(RGB2HSV_CV_0), get_acc_aid(RGB2HSV_CV_0));
     }
 
     // Swap buffer pointers for THRESHOLD_CV
-    if(cluster_id == get_cid(THRESHOLD_CV_1)){
+    if(cluster_id == get_acc_cid(THRESHOLD_CV_1)){
       arov->threshold_cv_1_1.img_in.tcdm.ptr = l1_img[0]; 
       arov->threshold_cv_1_1.img_out.tcdm.ptr = l1_img[2]; 
-      arov_update_buffer_addr(arov, get_cid(THRESHOLD_CV_1), get_aid(THRESHOLD_CV_1));
+      arov_update_buffer_addr(arov, get_acc_cid(THRESHOLD_CV_1), get_acc_aid(THRESHOLD_CV_1));
     }
 
     // Swap buffer pointers for ERODE_CV
-    if(cluster_id == get_cid(ERODE_CV_2)){
+    if(cluster_id == get_acc_cid(ERODE_CV_2)){
       arov->erode_cv_2_2.img_in.tcdm.ptr = l1_img[0]; 
       arov->erode_cv_2_2.img_out.tcdm.ptr = l1_img[2]; 
-      arov_update_buffer_addr(arov, get_cid(ERODE_CV_2), get_aid(ERODE_CV_2));
+      arov_update_buffer_addr(arov, get_acc_cid(ERODE_CV_2), get_acc_aid(ERODE_CV_2));
     }
 
     // Swap buffer pointers for DILATE_CV
-    if(cluster_id == get_cid(DILATE_CV_3)){
+    if(cluster_id == get_acc_cid(DILATE_CV_3)){
       arov->dilate_cv_3_3.img_in.tcdm.ptr = l1_img[0]; 
       arov->dilate_cv_3_3.img_out.tcdm.ptr = l1_img[2]; 
-      arov_update_buffer_addr(arov, get_cid(DILATE_CV_3), get_aid(DILATE_CV_3));
+      arov_update_buffer_addr(arov, get_acc_cid(DILATE_CV_3), get_acc_aid(DILATE_CV_3));
     }
     
     // Swap buffer pointers for DILATE_CV
-    if(cluster_id == get_cid(DILATE_CV_4)){
+    if(cluster_id == get_acc_cid(DILATE_CV_4)){
       arov->dilate_cv_4_4.img_in.tcdm.ptr = l1_img[0]; 
       arov->dilate_cv_4_4.img_out.tcdm.ptr = l1_img[2]; 
-      arov_update_buffer_addr(arov, get_cid(DILATE_CV_4), get_aid(DILATE_CV_4));
+      arov_update_buffer_addr(arov, get_acc_cid(DILATE_CV_4), get_acc_aid(DILATE_CV_4));
     }
 
     // Swap buffer pointers for DILATE_CV
-    if(cluster_id == get_cid(ERODE_CV_5)){
+    if(cluster_id == get_acc_cid(ERODE_CV_5)){
       arov->erode_cv_5_5.img_in.tcdm.ptr = l1_img[0]; 
       arov->erode_cv_5_5.img_out.tcdm.ptr = l1_img[2]; 
-      arov_update_buffer_addr(arov, get_cid(ERODE_CV_5), get_aid(ERODE_CV_5));
+      arov_update_buffer_addr(arov, get_acc_cid(ERODE_CV_5), get_acc_aid(ERODE_CV_5));
     }
 
   }
