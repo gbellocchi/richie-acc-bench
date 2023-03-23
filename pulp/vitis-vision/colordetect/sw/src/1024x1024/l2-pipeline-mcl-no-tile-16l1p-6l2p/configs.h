@@ -21,8 +21,8 @@
  * DSE parameters --> Benchmark
  * ===================================================================== */
 
-#define BENCHMARK_NAME "l2-pipeline-mcl-const-tile-16l1p-1l2p-512x512"
-#define BENCHMARK_TYPE L2_PIPELINE_MCL_CONST_TILE // See list_benchmarks.h
+#define BENCHMARK_NAME "l2-pipeline-mcl-no-tile-16l1p-6l2p-1024x1024-8img"
+#define BENCHMARK_TYPE L2_PIPELINE_MCL_NO_TILE // See list_benchmarks.h
 
 /* =====================================================================
  * DSE parameters --> Application
@@ -61,9 +61,9 @@
 #define n_acc_stages_cl                     ((int) (n_acc_stages) / (((int) (n_clusters) / (2)))) // Total number of processing stages per cluster
 
 // Application
-#define n_img                               4 // Number of input images to be processed
-#define img_rows                            512 
-#define img_cols                            512 
+#define n_img                               8 // Number of input images to be processed
+#define img_rows                            1024 
+#define img_cols                            1024 
 #define img_dim                             img_rows * img_cols
 
 /* =====================================================================
@@ -95,13 +95,13 @@
  * ===================================================================== */
 
 // - L2
-#define l2_size_B                           4*1024*1024 // bytes
-#define n_l2_ports_phy                      1
-#define n_l2_ports_virt                     1 // <= n_l2_ports_phy
+#define l2_size_B                           8*1024*1024 // bytes
+#define n_l2_ports_phy                      16
+#define n_l2_ports_virt                     16 // <= n_l2_ports_phy
 #define l2_cl_port_id_offset                0 // Offset on L2 port starting from port 0 (optional, default: 0)
 
 // - L2 multi-port
-#define l2_n_cl_per_port                    ((int) (n_clusters) / (n_l2_ports_virt))
+#define l2_n_cl_per_port                    1 // ((int) (n_clusters) / (n_l2_ports_virt))
 #define l2_n_bytes_per_port                 ((int) (l2_size_B) / (n_l2_ports_phy))
 #define l2_n_words_per_port                 ((int) (l2_n_bytes_per_port) / (sizeof(uint32_t)))
 

@@ -21,8 +21,8 @@
  * DSE parameters --> Benchmark
  * ===================================================================== */
 
-#define BENCHMARK_NAME "l2-pipeline-mcl-const-tile-16l1p-1l2p-512x512"
-#define BENCHMARK_TYPE L2_PIPELINE_MCL_CONST_TILE // See list_benchmarks.h
+#define BENCHMARK_NAME "l2-pipeline-scl-const-tile-16l1p-1l2p-1024x1024"
+#define BENCHMARK_TYPE L2_PIPELINE_SCL_CONST_TILE // See list_benchmarks.h
 
 /* =====================================================================
  * DSE parameters --> Application
@@ -41,18 +41,18 @@
 
 // Accelerator integration information
 #define RGB2HSV_CV_0      my_acc(0, 0, RGB2HSV_CV)
-#define THRESHOLD_CV_1    my_acc(1, 1, THRESHOLD_CV)
-#define ERODE_CV_2        my_acc(2, 2, ERODE_CV)
-#define DILATE_CV_3       my_acc(3, 3, DILATE_CV)
-#define DILATE_CV_4       my_acc(4, 4, DILATE_CV)
-#define ERODE_CV_5        my_acc(5, 5, ERODE_CV)
+#define THRESHOLD_CV_1    my_acc(0, 1, THRESHOLD_CV)
+#define ERODE_CV_2        my_acc(0, 2, ERODE_CV)
+#define DILATE_CV_3       my_acc(0, 3, DILATE_CV)
+#define DILATE_CV_4       my_acc(0, 4, DILATE_CV)
+#define ERODE_CV_5        my_acc(0, 5, ERODE_CV)
 
 /* =====================================================================
  * DSE parameters --> System
  * ===================================================================== */
 
 // System architecture
-#define n_clusters                          12 // 6 accelerator-rich + 6 to mimic bi-directional DMA
+#define n_clusters                          2 // 1 accelerator-rich + 1 to mimic bi-directional DMA
 
 // Accelerator-rich
 #define n_acc_total                         6
@@ -62,8 +62,8 @@
 
 // Application
 #define n_img                               4 // Number of input images to be processed
-#define img_rows                            512 
-#define img_cols                            512 
+#define img_rows                            1024 
+#define img_cols                            1024 
 #define img_dim                             img_rows * img_cols
 
 /* =====================================================================

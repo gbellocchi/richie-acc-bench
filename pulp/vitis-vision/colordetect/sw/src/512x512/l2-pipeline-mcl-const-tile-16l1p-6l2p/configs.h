@@ -21,7 +21,7 @@
  * DSE parameters --> Benchmark
  * ===================================================================== */
 
-#define BENCHMARK_NAME "l2-pipeline-mcl-const-tile-16l1p-6l2p-256x256"
+#define BENCHMARK_NAME "l2-pipeline-mcl-const-tile-16l1p-6l2p-512x512"
 #define BENCHMARK_TYPE L2_PIPELINE_MCL_CONST_TILE // See list_benchmarks.h
 
 /* =====================================================================

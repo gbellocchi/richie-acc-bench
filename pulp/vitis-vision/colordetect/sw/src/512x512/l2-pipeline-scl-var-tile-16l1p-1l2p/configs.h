@@ -21,7 +21,7 @@
  * DSE parameters --> Benchmark
  * ===================================================================== */
 
-#define BENCHMARK_NAME "l2-pipeline-scl-var-tile-16l1p-1l2p-256x256"
+#define BENCHMARK_NAME "l2-pipeline-scl-var-tile-16l1p-1l2p-512x512"
 #define BENCHMARK_TYPE L2_PIPELINE_SCL_VAR_TILE // See list_benchmarks.h
 
 /* =====================================================================
