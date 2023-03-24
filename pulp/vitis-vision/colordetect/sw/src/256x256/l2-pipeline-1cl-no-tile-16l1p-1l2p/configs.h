@@ -22,7 +22,7 @@
  * ===================================================================== */
 
 #define BENCHMARK_NAME "l2-pipeline-1cl-no-tile-16l1p-1l2p-256x256-8img"
-#define BENCHMARK_TYPE L2_PIPELINE_SCL_NO_TILE // See list_benchmarks.h
+#define BENCHMARK_TYPE L2_PIPELINE_MCL_NO_TILE // See list_benchmarks.h
 
 /* =====================================================================
  * DSE parameters --> Application

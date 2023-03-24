@@ -142,7 +142,6 @@ static inline cluster_barrier_all_eu_soc_evt(const int cluster_id, const int exp
         printf("[MST] [EXP-%d] Terminated run #%d!\n", hero_rt_cluster_id(), experiment_id);
       else
         printf("[SLV] [EXP-%d] Terminated run #%d!\n", hero_rt_cluster_id(), experiment_id);
-      }
     #endif
 
                               /* MASTER CLUSTER */
