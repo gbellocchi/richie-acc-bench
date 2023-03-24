@@ -21,8 +21,8 @@
  * DSE parameters --> Benchmark
  * ===================================================================== */
 
-#define BENCHMARK_NAME "l2-pipeline-mcl-no-tile-16l1p-6l2p-256x256-8img"
-#define BENCHMARK_TYPE L2_PIPELINE_MCL_NO_TILE // See list_benchmarks.h
+#define BENCHMARK_NAME "l2-pipeline-1cl-no-tile-16l1p-1l2p-256x256-8img"
+#define BENCHMARK_TYPE L2_PIPELINE_SCL_NO_TILE // See list_benchmarks.h
 
 /* =====================================================================
  * DSE parameters --> Application
@@ -41,18 +41,18 @@
 
 // Accelerator integration information
 #define RGB2HSV_CV_0      my_acc(0, 0, RGB2HSV_CV)
-#define THRESHOLD_CV_1    my_acc(1, 1, THRESHOLD_CV)
-#define ERODE_CV_2        my_acc(2, 2, ERODE_CV)
-#define DILATE_CV_3       my_acc(3, 3, DILATE_CV)
-#define DILATE_CV_4       my_acc(4, 4, DILATE_CV)
-#define ERODE_CV_5        my_acc(5, 5, ERODE_CV)
+#define THRESHOLD_CV_1    my_acc(0, 1, THRESHOLD_CV)
+#define ERODE_CV_2        my_acc(0, 2, ERODE_CV)
+#define DILATE_CV_3       my_acc(0, 3, DILATE_CV)
+#define DILATE_CV_4       my_acc(0, 4, DILATE_CV)
+#define ERODE_CV_5        my_acc(0, 5, ERODE_CV)
 
 /* =====================================================================
  * DSE parameters --> System
  * ===================================================================== */
 
 // System architecture
-#define n_clusters                          12 // 6 accelerator-rich + 6 to mimic bi-directional DMA
+#define n_clusters                          2 // 1 accelerator-rich + 1 to mimic bi-directional DMA
 
 // Accelerator-rich
 #define n_acc_total                         6
@@ -95,13 +95,13 @@
  * ===================================================================== */
 
 // - L2
-#define l2_size_B                           8*1024*1024 // bytes
-#define n_l2_ports_phy                      16
-#define n_l2_ports_virt                     16 // <= n_l2_ports_phy
+#define l2_size_B                           4*1024*1024 // bytes
+#define n_l2_ports_phy                      1
+#define n_l2_ports_virt                     1 // <= n_l2_ports_phy
 #define l2_cl_port_id_offset                0 // Offset on L2 port starting from port 0 (optional, default: 0)
 
 // - L2 multi-port
-#define l2_n_cl_per_port                    1 // ((int) (n_clusters) / (n_l2_ports_virt))
+#define l2_n_cl_per_port                    ((int) (n_clusters) / (n_l2_ports_virt))
 #define l2_n_bytes_per_port                 ((int) (l2_size_B) / (n_l2_ports_phy))
 #define l2_n_words_per_port                 ((int) (l2_n_bytes_per_port) / (sizeof(uint32_t)))
 

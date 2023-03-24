@@ -88,7 +88,6 @@ static inline void arov_map_params_color_detect(
 
   if(cluster_id == 0){
     switch (accelerator_id){
-
       case 0: rgb2hsv_cv_pipeline_map_params(&(arov->rgb2hsv_cv_0_0), &_l1_in_img, &_l1_out_img); break;
       case 1: threshold_cv_pipeline_map_params(&(arov->threshold_cv_0_1), &_l1_in_img, &_l1_out_img); break;
       case 2: erode_cv_pipeline_map_params(&(arov->erode_cv_0_2), &_l1_in_img, &_l1_out_img); break;
@@ -98,6 +97,7 @@ static inline void arov_map_params_color_detect(
       default: printf("Error: No matching case for <arov_map_params_color_detect>\n"); break;
     }
   }
+
 };
 
 static inline void arov_swap_buffers_color_detect(

@@ -32,11 +32,26 @@ LIBPATHS += -L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/de
 			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl1_lic2 \
 			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl1_lic3 \
 			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl1_lic4 \
-			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl1_lic5
+			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl1_lic5 \
+			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl2_lic0 \
+			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl2_lic1 \
+			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl2_lic2 \
+			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl2_lic3 \
+			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl2_lic4 \
+			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl2_lic5 \
+			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl3_lic0 \
+			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl3_lic1 \
+			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl3_lic2 \
+			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl3_lic3 \
+			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl3_lic4 \
+			-L/home/gbellocchi/workspace_pulp/hero/hero-arov/pulp/sdk/pkg/sdk/dev/install/lib/hero-sim/hwpe_cl3_lic5 
 
 LDFLAGS_PULP += -lhwpe_cl0_lic0 -lhwpe_cl0_lic1 -lhwpe_cl0_lic2 -lhwpe_cl0_lic3 -lhwpe_cl0_lic4 -lhwpe_cl0_lic5 \
-				-lhwpe_cl1_lic0 -lhwpe_cl1_lic1 -lhwpe_cl1_lic2 -lhwpe_cl1_lic3 -lhwpe_cl1_lic4 -lhwpe_cl1_lic5
+				-lhwpe_cl1_lic0 -lhwpe_cl1_lic1 -lhwpe_cl1_lic2 -lhwpe_cl1_lic3 -lhwpe_cl1_lic4 -lhwpe_cl1_lic5 \
+				-lhwpe_cl2_lic0 -lhwpe_cl2_lic1 -lhwpe_cl2_lic2 -lhwpe_cl2_lic3 -lhwpe_cl2_lic4 -lhwpe_cl2_lic5 \
+				-lhwpe_cl3_lic0 -lhwpe_cl3_lic1 -lhwpe_cl3_lic2 -lhwpe_cl3_lic3 -lhwpe_cl3_lic4 -lhwpe_cl3_lic5 \
 
 LDFLAGS += 	-lhwpe_cl0_lic0 -lhwpe_cl0_lic1 -lhwpe_cl0_lic2 -lhwpe_cl0_lic3 -lhwpe_cl0_lic4 -lhwpe_cl0_lic5 \
-			-lhwpe_cl1_lic0 -lhwpe_cl1_lic1 -lhwpe_cl1_lic2 -lhwpe_cl1_lic3 -lhwpe_cl1_lic4 -lhwpe_cl1_lic5
-
+			-lhwpe_cl1_lic0 -lhwpe_cl1_lic1 -lhwpe_cl1_lic2 -lhwpe_cl1_lic3 -lhwpe_cl1_lic4 -lhwpe_cl1_lic5 \
+			-lhwpe_cl2_lic0 -lhwpe_cl2_lic1 -lhwpe_cl2_lic2 -lhwpe_cl2_lic3 -lhwpe_cl2_lic4 -lhwpe_cl2_lic5 \
+			-lhwpe_cl3_lic0 -lhwpe_cl3_lic1 -lhwpe_cl3_lic2 -lhwpe_cl3_lic3 -lhwpe_cl3_lic4 -lhwpe_cl3_lic5
