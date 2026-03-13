@@ -6,8 +6,6 @@ CSRCS = $(wildcard *.c)
 
 INCPATHS += -I$(PULP_SDK_HOME)/install/include -I$(ROOT) $(include_paths)
 
-ROOT := $(patsubst %/,%, $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
-
 # Add experiment binaries
 ldflags += $(experiment_bins)
 
