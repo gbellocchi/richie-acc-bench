@@ -61,9 +61,9 @@
 #define n_acc_stages_cl                     1 // Total number of processing stages per cluster
 
 // Application
-#define n_img                               4 // Number of input images to be processed
-#define img_rows                            128 
-#define img_cols                            256 
+#define n_img                               2 // Number of input images to be processed
+#define img_rows                            256 
+#define img_cols                            128 
 #define img_dim                             img_rows * img_cols
 
 /* =====================================================================

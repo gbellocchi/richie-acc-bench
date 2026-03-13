@@ -22,7 +22,7 @@
  * ===================================================================== */
 
 #define BENCHMARK_NAME "test-l2-pipeline-scl-no-tile-1cl"
-#define BENCHMARK_TYPE L2_PIPELINE_SCL_NO_TILE // See list_benchmarks.h
+#define BENCHMARK_TYPE L2_PIPELINE_MCL_NO_TILE // See list_benchmarks.h
 
 /* =====================================================================
  * DSE parameters --> Application
@@ -61,7 +61,7 @@
 #define n_acc_stages_cl                     ((int) (n_acc_stages) / (((int) (n_clusters) / (2)))) // Total number of processing stages per cluster
 
 // Application
-#define n_img                               4 // Number of input images to be processed
+#define n_img                               2 // Number of input images to be processed
 #define img_rows                            256 
 #define img_cols                            128 
 #define img_dim                             img_rows * img_cols
