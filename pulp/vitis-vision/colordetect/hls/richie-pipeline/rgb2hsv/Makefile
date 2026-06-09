@@ -17,9 +17,9 @@ SOL_NAME 		:= sol1
 ACC_NAME 		:= rgb2hsv_cv
 
 # Vitis commands
-CSIM			?= 0
+CSIM			?= 1
 CSYNTH			?= 1
-COSIM			?= 0
+COSIM			?= 1
 COSIM_GUI		?= 0
 
 # Directories

@@ -65,12 +65,12 @@ void colordetect_dut_wrapper(cv::Mat& _src, cv::Mat& _dst, int rows, int cols, u
     stream_out_t stream_dst("stream_dst");
 
     // Mat
-    xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1> _rgb2hsv(rows, cols);
-    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1> _imgHelper1(rows, cols);
-    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1> _imgHelper2(rows, cols);
-    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1> _imgHelper3(rows, cols);
-    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1> _imgHelper4(rows, cols);
-    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1> _imgOutput(rows, cols);
+    xf::cv::Mat<IN_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_RGB2HSV> _rgb2hsv(rows, cols);
+    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_HELP_1> _imgHelper1(rows, cols);
+    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_HELP_2> _imgHelper2(rows, cols);
+    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_HELP_3> _imgHelper3(rows, cols);
+    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_HELP_4> _imgHelper4(rows, cols);
+    xf::cv::Mat<OUT_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_OUT_1> _imgOutput(rows, cols);
 
     /* Pipeline */
 
@@ -86,17 +86,17 @@ void colordetect_dut_wrapper(cv::Mat& _src, cv::Mat& _dst, int rows, int cols, u
     );
 
     // Retrieve DUT output stream and convert to xf::cv::Mat object
-    xf::cv::AXIvideo2xfMat<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1>(stream_dut_out, _rgb2hsv);
+    xf::cv::AXIvideo2xfMat_patch<INPUT_PTR_WIDTH, IN_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_RGB2HSV>(stream_dut_out, _rgb2hsv);
 
     // Do color thresholding, then use erode and dilate to to fully mark color areas
-    xf::cv::colorthresholding<IN_TYPE, OUT_TYPE, MAXCOLORS, HEIGHT, WIDTH, NPC1>(_rgb2hsv, _imgHelper1, low_thresh, high_thresh);
-    xf::cv::erode<XF_BORDER_CONSTANT, OUT_TYPE, HEIGHT, WIDTH, XF_KERNEL_SHAPE, FILTER_SIZE, FILTER_SIZE, ITERATIONS, NPC1>(_imgHelper1, _imgHelper2, process_shape);
-    xf::cv::dilate<XF_BORDER_CONSTANT, OUT_TYPE, HEIGHT, WIDTH, XF_KERNEL_SHAPE, FILTER_SIZE, FILTER_SIZE, ITERATIONS, NPC1>(_imgHelper2, _imgHelper3, process_shape);
-    xf::cv::dilate<XF_BORDER_CONSTANT, OUT_TYPE, HEIGHT, WIDTH, XF_KERNEL_SHAPE, FILTER_SIZE, FILTER_SIZE, ITERATIONS, NPC1>(_imgHelper3, _imgHelper4, process_shape);
-    xf::cv::erode<XF_BORDER_CONSTANT, OUT_TYPE, HEIGHT, WIDTH, XF_KERNEL_SHAPE, FILTER_SIZE, FILTER_SIZE, ITERATIONS, NPC1>(_imgHelper4, _imgOutput, process_shape);
+    xf::cv::colorthresholding_patch<IN_TYPE, OUT_TYPE, MAXCOLORS, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_RGB2HSV, XF_CV_DEPTH_HELP_1>(_rgb2hsv, _imgHelper1, low_thresh, high_thresh);
+    xf::cv::erode_patch<XF_BORDER_CONSTANT, OUT_TYPE, HEIGHT, WIDTH, XF_KERNEL_SHAPE, FILTER_SIZE, FILTER_SIZE, ITERATIONS, NPC1, XF_CV_DEPTH_HELP_1, XF_CV_DEPTH_HELP_2>(_imgHelper1, _imgHelper2, process_shape);
+    xf::cv::dilate_patch<XF_BORDER_CONSTANT, OUT_TYPE, HEIGHT, WIDTH, XF_KERNEL_SHAPE, FILTER_SIZE, FILTER_SIZE, ITERATIONS, NPC1, XF_CV_DEPTH_HELP_2, XF_CV_DEPTH_HELP_3>(_imgHelper2, _imgHelper3, process_shape);
+    xf::cv::dilate_patch<XF_BORDER_CONSTANT, OUT_TYPE, HEIGHT, WIDTH, XF_KERNEL_SHAPE, FILTER_SIZE, FILTER_SIZE, ITERATIONS, NPC1, XF_CV_DEPTH_HELP_3, XF_CV_DEPTH_HELP_4>(_imgHelper3, _imgHelper4, process_shape);
+    xf::cv::erode_patch<XF_BORDER_CONSTANT, OUT_TYPE, HEIGHT, WIDTH, XF_KERNEL_SHAPE, FILTER_SIZE, FILTER_SIZE, ITERATIONS, NPC1, XF_CV_DEPTH_HELP_4, XF_CV_DEPTH_OUT_1>(_imgHelper4, _imgOutput, process_shape);
 
     // Convert from xf::cv::Mat to cv::Mat
-    xf::cv::xfMat2AXIvideo<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1>(_imgOutput, stream_dst);
+    xf::cv::xfMat2AXIvideo_patch<OUTPUT_PTR_WIDTH, OUT_TYPE, HEIGHT, WIDTH, NPC1, XF_CV_DEPTH_OUT_1>(_imgOutput, stream_dst);
     xf::cv::AXIvideo2cvMatxf<NPC1, OUTPUT_PTR_WIDTH>(stream_dst, _dst);
 }
 
