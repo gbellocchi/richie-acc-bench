@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
     stream_out_t stream_out("stream_out");
 
     // Convert Mat to Stream
-    cvMat2AXIvideoxf<NPC1>(in_img, stream_in);
+    xf::cv::cvMat2AXIvideoxf<NPC1>(in_img, stream_in);
 
     // DUT
     color_detect(
@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
     );
 
     // Convert Stream to Mat
-    AXIvideo2cvMatxf<NPC1, OUTPUT_PTR_WIDTH>(stream_out, out_img);
+    xf::cv::AXIvideo2cvMatxf<NPC1, OUTPUT_PTR_WIDTH>(stream_out, out_img);
 
     // Results verification:
     int cnt = 0;

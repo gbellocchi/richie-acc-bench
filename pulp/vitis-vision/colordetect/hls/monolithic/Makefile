@@ -29,6 +29,7 @@ COMMON_DIR		= $(PRJ_ROOT)/../../../common
 MK_DIR 			= $(COMMON_DIR)/mk
 TCL_DIR 		= $(COMMON_DIR)/tcl
 GENHFILE_DIR	= $(COMMON_DIR)/gen_Hfile
+VITIS_PATCH_DIR	= $(COMMON_DIR)/Vitis_Libraries_patch/vision_L1_patch
 
 # Source files
 CPP_TOP_PATH 	:= $(SRC_DIR)/xf_colordetect_accel.cpp
